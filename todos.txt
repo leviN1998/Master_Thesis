@@ -1,0 +1,27 @@
+Simulator
+
+- Get smooth ball to work and do fixes mentioned in simple_spin.py
+- Transition to event simulation
+- Set up Camera position (static), lighting and ball movement (physics)
+
+
+Dataset
+
+- Simulate basic dataset just rotating:
+    10k rotations (image with angles from meeting 1)
+
+- Have a look at the real dataset
+    image pixel and ball sizes are important
+
+- Record dataset
+    Talk with Thomas how this works (setup, groud-truth etc)
+    Try cronstructions for returning balls 
+
+- Simulate advanced dataset
+    Include ball movement and data-Augmentations
+    e.g. Ball not centered in image
+
+
+Network
+
+- implement baseline network with firenet Architecture
