@@ -1,8 +1,16 @@
 Simulator
 
-- Get smooth ball to work and do fixes mentioned in simple_spin.py
+- Create rotation with theta and gamma and add it to the ball
 - Transition to event simulation
-- Set up Camera position (static), lighting and ball movement (physics)
+- Get a version to work that just rotates the ball
+- When this is working, add comments and explain everything
+
+- Make python code to simulate physics of ball falling (very simple)
+  to be able to give it a initial velocity and the adjust the position by the formula
+  The rotation shoul be set by keyframes and the position should be adjusted every frame
+
+- get a throwing version to work
+
 
 
 Dataset

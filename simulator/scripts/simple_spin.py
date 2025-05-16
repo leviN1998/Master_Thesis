@@ -5,23 +5,22 @@
     The rendering takes place in a loop, where it would be possible to insert the event simulation
 
     A video is generated from the rendered images
-
-    There is still some work to in tweaking the blender settings as well as get a smooth ball to render
-    (use cycles and find good configuration)
-    Also there should be a way to get the image without having to load it from disk. This should save some time
-    Check if there is a way to get rid of all the blender info messages
 """
 
 import bpy
 import os
 import cv2
 import tqdm
+import numpy as np
+import contextlib
+import sys
 
 
 # set up paths
-path_scene = os.path.abspath(os.getcwd()) + "/../scenes/" + "basic_cube.blend"
-path_output = os.path.abspath(os.getcwd()) + "/../output/"
+path_scene = os.path.abspath(os.getcwd()) + "/../data/scenes/" + "basic_cube.blend"
+path_output = os.path.abspath(os.getcwd()) + "/../data/output/"
 path_image = path_output + "render_img.png"
+path_log = os.path.abspath(os.getcwd()) + "/../data/logs/"
 
 # load scene
 bpy.ops.wm.open_mainfile(filepath=path_scene)
@@ -66,10 +65,20 @@ scene.render.resolution_x = 1920
 scene.render.resolution_y = 1080
 scene.render.resolution_percentage = 100  # Ensure full resolution
 
+# redirect output to log file
+logfile = path_log + 'blender_render.log'
+open(logfile, 'a').close()
+old = os.dup(sys.stdout.fileno())
+sys.stdout.flush()
+os.close(sys.stdout.fileno())
+fd = os.open(logfile, os.O_WRONLY)
+
 
 # Render loop for each frame
 for frame in tqdm.tqdm(range(scene.frame_start, scene.frame_end + 1), desc="Rendering frames"):
     scene.frame_set(frame)
+
+    
     bpy.ops.render.render(write_still=True)
 
     # Read the rendered image
@@ -80,3 +89,8 @@ for frame in tqdm.tqdm(range(scene.frame_start, scene.frame_end + 1), desc="Rend
 
 # Release the video writer
 video.release()
+
+# disable output redirection
+os.close(fd)
+os.dup(old)
+os.close(old)
