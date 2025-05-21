@@ -9,25 +9,29 @@ papersize: a4
 
 # Summary
 
-Mostly work on the event simulator and planning of the thesis. Split work into categories: simulator, dataset, model. <br>
-For the simulator i worked on understanding how the Blender interface works and started implementing a more realistic simulation (Ball moving etc.) see one of the questions. <br>
-The dataset part should be split into real and synthetic data (see question). Model part (See question). 
+More work on the simulator: <br>
+
+* Created table tennis ball with logo in Blender (\autoref{fig:image})
+* Ball spinning animation now working with spins that can be randomly generated.
+* Created animation that includes ball physics. A realistic ball that can be shot and is affected by gravity. Probably overkill, just using a ball that moves in a line would be enough i think.
+* Spinning ball with the creation of the events still has some bugs until i figure out how to properly set all the parameters of the simulated sensor.
+
+![Table tennis ball with andro logo\label{fig:image}](../ball.png){ width=75% }
 
 # New ideas
 
 # Open questions
 
-* How realistic should the simulation be in terms of camera movement. Should i use a moving camera or mounted cameras and zoom into the ball. Should there be obstacles (e.g. table) in the background?
-* Is there a dataset of Max's Thesis to use as baseline (synthetic or real)
-* How big should a baseline dataset be?
-* Can you give me some literature esp. on the neural network part to get started with?
-* Also some literature about spin estimation in general could be helpful. Only if you know anything good, i can search something on my own otherwise.
+* What are good values for max-spin? In maxs Thesis he used 0-20 rps in the simulator, but for the real data it was faster.
 
 # Next steps
-* Continue working on simulator
-* Record and simulate basic dataset
-* Set up basline model 
-* Train baseline model on basic dataset
-* Create Trello board for project structure in more detail
+* Fix bugs of the event rendering
+* Align parameters with specification of real world, image-size, ball size in pixels etc.
+* Implement ground truth saving (ball-position and rotation). To be able to cut the ball-region out of the image / event-stream.
+* Create first dataset with simple ball rotation
+* Implement ball movement
+* Create dataset with moving ball
+
+
 
 # Bibliography
