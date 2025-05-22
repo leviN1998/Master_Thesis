@@ -1,0 +1,217 @@
+""" Generate event data and video of the trajectory of a table tennis ball
+
+This script contains the code to generate a hdf5 file of the event data as
+well as a video of a table tennis ball that moves and rotates as specified
+It can be used to generate the first iteration of datasets used for the 
+spin-estimation model.
+
+There are many parameters that can be adjusted to change the simulation
+and the output video. The most important ones are:
+
+
+"""
+
+import bpy
+import os
+import cv2
+import tqdm as pbar
+import numpy as np
+import sys
+from mathutils import Vector
+sys.path.append("../src")
+from dvs_sensor import *
+from dvs_sensor_blender import Blender_DvsSensor
+import rotations
+
+# ---------------------------------------------------- Parameters ---------------------------------------------------
+
+# paths:
+path_scene = os.path.abspath(os.getcwd()) + "/../data/scenes/"
+path_output = os.path.abspath(os.getcwd()) + "/../data/output/"
+path_logs = os.path.abspath(os.getcwd()) + "/../data/logs/"
+noise_paths = os.path.abspath(os.getcwd()) + "/../data/noise/"
+noise_paths = (noise_paths + "noise_pos_161lux.npy", noise_paths + "noise_pos_161lux.npy") # two paths needed to initialize
+
+# File names:
+object_name = "ball_moving.blend"
+ball_name = "Sphere"                   # Name of the object inside blender-scene
+camera_name = "Camera"                 # ...
+temp_name =   "temp/temp"                   # just the blender rendering file
+log_name = "render.log"                # name of teh log file
+output_name = "spinning_ball"          # name for the hdf5 file and the video
+
+# general settings:
+generate_video = True
+generate_hdf5 = True
+save_blender = False
+simulate = True                        # set False if just the blender file is needed
+random_rotation = True                 # set False if the ball should rotate as manually specified
+random_rps = False                     # not supported yet
+
+# Simulation settings:
+total_frames = 1000                    # high enough to cover rotation
+rps = 20                               # rotations per second
+total_rotations = 2                    # total rotations util the end of the simulation
+video_length = total_rotations / rps   # length of the video in seconds
+fps = int(total_frames / video_length) # frames per second
+ball_speed = 0.5                       # how much the ball moves [m/s]
+ball_start = (-3, -3, 0)               # start position of the ball
+ball_end = (3, 5, 0)                   # end position of the ball
+rotation_axis = (0, 1, 1)              # axis of rotation (only if not random rotation)
+video_fps = fps                        # video will be slow-mo so it is actually viewable
+
+# Camera settings: (position and rotation from blender scene)
+resolution_x = 1280
+resolution_y = 720
+resolution_percentage = 100
+focal_length = 8.0  # (mm)
+
+# Event Camera settings
+
+
+# Variables
+# ball = bpy.data.objects[ball_name]
+# scene = bpy.context.scene
+# event_camera = None
+
+
+def init_scene():
+    """ initialize blender scene
+
+        returns:
+            ball and scene
+    """
+    bpy.ops.wm.open_mainfile(filepath=path_scene + object_name)
+    ball = bpy.data.objects[ball_name]
+    scene = bpy.context.scene
+
+    bpy.context.scene.frame_start = 0
+    bpy.context.scene.frame_end = total_frames
+    bpy.context.scene.render.fps = fps
+    bpy.context.scene.render.image_settings.file_format = 'PNG'
+    return ball
+
+
+def init_camera():
+    """ Initialize event and frame cameras
+
+        returns event_camera
+    """
+    cam_pos = bpy.data.objects[camera_name].location
+    cam_rot = bpy.data.objects[camera_name].rotation_euler
+    event_camera = Blender_DvsSensor("Sensor")
+    event_camera.cam = bpy.data.objects[camera_name]
+    event_camera.set_sensor(nx=resolution_x, ny=resolution_y, pp=0.015)
+    event_camera.set_dvs_sensor(th_pos=0.15, th_neg=0.15, th_n=0.05, lat=500, tau=300, jit=100, bgn=0.0001)
+    event_camera.set_sensor_optics(focal_length)
+    bpy.context.scene.render.resolution_x = event_camera.def_x
+    bpy.context.scene.render.resolution_y = event_camera.def_y
+    bpy.context.scene.render.resolution_percentage = resolution_percentage
+
+    bpy.context.scene.camera = event_camera.cam
+    event_camera.set_position(cam_pos)
+    event_camera.set_angle(cam_rot)
+    event_camera.init_tension()
+    event_camera.init_bgn_hist(noise_paths[0], noise_paths[1])
+    return event_camera
+
+
+def calculate_position_frame() -> int:
+    """ Calculate the frame to set the end position to
+
+        This is dependent on the speed of the ball and the fps
+        This function calculates the frame when the position of the ball
+        should be ball_end.
+    """
+    return total_frames
+
+
+def generate_keyframes(ball, rotation: rotations.Rotation) -> None:
+    """ Generate keyframes to simulate object
+    
+        For the rotation only the axis is needed because the simulation is fixed
+        to "total_rotations" rotations
+    """
+    ball.rotation_mode = 'AXIS_ANGLE'
+    ax = rotation.get_axis()
+    ball.rotation_axis_angle = (0, ax[0], ax[1], ax[2])
+    ball.keyframe_insert(data_path="rotation_axis_angle", frame=0, index=-1)
+
+    ball.rotation_axis_angle = (total_rotations * np.pi * 2, ax[0], ax[1], ax[2])
+    ball.keyframe_insert(data_path="rotation_axis_angle", frame=total_frames, index=-1)
+
+    ball.location = ball_start
+    ball.keyframe_insert(data_path="location", frame=0)
+
+    ball.location = ball_end
+    ball.keyframe_insert(data_path="location", frame=calculate_position_frame())
+
+    # Set interpolation to linear for constant rotation speed
+    for fcurve in ball.animation_data.action.fcurves:
+        for kf in fcurve.keyframe_points:
+            kf.interpolation = 'LINEAR'
+
+
+
+def simulate(event_camera):
+    """ Executes the simulation
+    
+    """
+    # redirect output to log file
+    logfile = path_logs + log_name
+    open(logfile, 'a').close()
+    old = os.dup(sys.stdout.fileno())
+    sys.stdout.flush()
+    os.close(sys.stdout.fileno())
+    fd = os.open(logfile, os.O_WRONLY)
+
+    if simulate:
+        if generate_video:
+            # Initialize video writer
+            fourcc = cv2.VideoWriter_fourcc("M", "J", "P", "G")
+            # video = cv2.VideoWriter(path_output + output_name + ".avi", fourcc, video_fps, (event_camera.def_x, event_camera.def_y))
+
+        if generate_hdf5:
+            # TODO: save as hdf5
+            ev = EventBuffer(0)
+        
+        for frame in pbar.tqdm(range(bpy.context.scene.frame_start, bpy.context.scene.frame_end + 1), desc="Rendering frames"):
+            bpy.context.scene.frame_set(frame)
+
+            file_name = path_output + temp_name + str(frame) + ".png"
+            bpy.context.scene.render.filepath = file_name
+            bpy.ops.render.render(write_still=True)
+            img = cv2.imread(filename=file_name)
+
+            if generate_hdf5:
+                if frame == 0:
+                    event_camera.init_image(img)
+                else:
+                    delta_t = 1000000.0 * (1.0 / fps)  # delta t in us
+                    pk = event_camera.update(img, delta_t)
+                    ev.increase_ev(pk)
+
+            # if generate_video:
+                # video.write(img)
+
+        # if generate_video:
+            # video.release()
+
+        if generate_hdf5:
+            ev.write(path_output + output_name + ".dat")
+
+    # disable output redirection
+    os.close(fd)
+    os.dup(old)
+    os.close(old)
+
+    if save_blender:
+        bpy.ops.wm.save_as_mainfile(filepath=path_output + output_name + ".blend")
+
+
+if __name__ == "__main__":
+    ball = init_scene()
+    event_camera = init_camera()
+    rot = rotations.random_rotation()
+    generate_keyframes(ball, rot)
+    simulate(event_camera)

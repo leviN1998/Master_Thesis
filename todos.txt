@@ -1,13 +1,9 @@
 Simulator
 
-- make clean simple version and comment code ()
-- Create file to convert event data and create video if needed
+- debug generate_trajectory.py
+- finish generate generate_trajectory
 
-- Make python code to simulate physics of ball falling (very simple)
-  to be able to give it a initial velocity and the adjust the position by the formula
-  The rotation shoul be set by keyframes and the position should be adjusted every frame
-
-- get a throwing version to work
+- Create file to convert event data and create video if needed 
 
 
 

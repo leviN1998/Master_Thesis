@@ -108,6 +108,14 @@ ppsee.init_bgn_hist("../data/noise/noise_pos_161lux.npy", "../data/noise/noise_p
 scene.render.resolution_x = ppsee.def_x
 scene.render.resolution_y = ppsee.def_y
 
+# bpy.context.scene.render.engine = 'CYCLES'
+# bpy.context.scene.cycles.device = 'GPU'
+# bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'CUDA'
+
+# print("Active Compute Device:", bpy.context.preferences.addons["cycles"].preferences.compute_device_type)
+# print("Current Render Engine:", bpy.context.scene.render.engine)
+# print("Device used by Cycles for rendering:", bpy.context.scene.cycles.device) 
+
 
 # redirect output to log file
 logfile = path_log + 'blender_render.log'

@@ -10,7 +10,7 @@ import numpy as np
 from dat_files import load_dat_event
 fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
 
-filename = '../data/output/ball_event_test/' + "spinning_ball.dat"
+filename = '../data/output/' + "spinning_ball.dat"
 
 ts, x, y, p = load_dat_event(filename)
 res = [1080, 1920]
