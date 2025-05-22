@@ -1,9 +1,7 @@
 Simulator
 
-- Create rotation with theta and gamma and add it to the ball
-- Transition to event simulation
-- Get a version to work that just rotates the ball
-- When this is working, add comments and explain everything
+- make clean simple version and comment code ()
+- Create file to convert event data and create video if needed
 
 - Make python code to simulate physics of ball falling (very simple)
   to be able to give it a initial velocity and the adjust the position by the formula
