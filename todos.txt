@@ -1,9 +1,15 @@
 Simulator
 
-- debug generate_trajectory.py
+- Event-handling with hdf5
+- Custom video creation
+- Ground-truth files (also include time rps etc.)
+
+
 - finish generate generate_trajectory
 
-- Create file to convert event data and create video if needed 
+- fix POLY Schriftzug (orange aber nicht richtig geshadedt)
+
+- organize tool files into seperate folder
 
 
 

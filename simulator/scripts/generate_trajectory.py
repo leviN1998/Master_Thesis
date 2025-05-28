@@ -10,7 +10,6 @@ and the output video. The most important ones are:
 
 
 """
-
 import bpy
 import os
 import cv2
@@ -49,7 +48,7 @@ random_rotation = True                 # set False if the ball should rotate as 
 random_rps = False                     # not supported yet
 
 # Simulation settings:
-total_frames = 1000                    # high enough to cover rotation
+total_frames = 300                     # high enough to cover rotation
 rps = 20                               # rotations per second
 total_rotations = 2                    # total rotations util the end of the simulation
 video_length = total_rotations / rps   # length of the video in seconds
@@ -178,7 +177,8 @@ def simulate(event_camera):
         for frame in pbar.tqdm(range(bpy.context.scene.frame_start, bpy.context.scene.frame_end + 1), desc="Rendering frames"):
             bpy.context.scene.frame_set(frame)
 
-            file_name = path_output + temp_name + str(frame) + ".png"
+            # file_name = path_output + temp_name + str(frame) + ".png"
+            file_name = path_output + temp_name + ".png" # dont save that much images for now
             bpy.context.scene.render.filepath = file_name
             bpy.ops.render.render(write_still=True)
             img = cv2.imread(filename=file_name)
@@ -187,7 +187,7 @@ def simulate(event_camera):
                 if frame == 0:
                     event_camera.init_image(img)
                 else:
-                    delta_t = 1000000.0 * (1.0 / fps)  # delta t in us
+                    delta_t = 1000000.0 * (1.0 / fps)  # delta t in us (1000000 us = 1 s)
                     pk = event_camera.update(img, delta_t)
                     ev.increase_ev(pk)
 
@@ -210,6 +210,7 @@ def simulate(event_camera):
 
 
 if __name__ == "__main__":
+    print(path_scene + object_name)
     ball = init_scene()
     event_camera = init_camera()
     rot = rotations.random_rotation()
