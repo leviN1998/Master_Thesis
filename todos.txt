@@ -1,16 +1,27 @@
 Simulator
 
-- Event-handling with hdf5
-- Custom video creation
 - Ground-truth files (also include time rps etc.)
-
+- find way to extract ball coordinates and size in screen coordinates
+- debug rendered-video
+- find good framerate and samples to have reasonable rendering times
+- check with david if spins are generated correctly
+- check if rps frame and video length calculations are reasonable
+- calculate how long dataset would take to generate
+- check with david and Andreas what the additional things in hdf5 should be
 
 - finish generate generate_trajectory
+
+- do dataset-generation with yaml file instead of all variables inside generate_trajectory
 
 - fix POLY Schriftzug (orange aber nicht richtig geshadedt)
 
 - organize tool files into seperate folder
 
+-----------------------------------------------------------------------------------------------------
+
+GANZ WICHTIG: ---------------->   ANLEITUNG FÜR BPY und CONDA ENV SCHREIBEN!!!!!!!!!!!!!!!!!!!
+
+------------------------------------------------------------------------------------------------------
 
 
 Dataset
