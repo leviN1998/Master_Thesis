@@ -106,9 +106,8 @@ def create_video(events: EventBuffer, save_filename: str, resolution=(1280, 720)
     y = events.get_y()
     p = events.get_p()
 
-    res = [720, 1280]
-    out = cv2.VideoWriter(save_filename, fourcc, 20.0, (res[1], res[0]))
-    tw = 1000
+    res = [resolution[1], resolution[0]]
+    out = cv2.VideoWriter(save_filename, fourcc, fps, (res[1], res[0]))
     img = np.zeros((res[0], res[1]), dtype=np.uint8)
     tsurface = np.zeros((res[0], res[1]), dtype=np.uint64)
     indsurface = np.zeros((res[0], res[1]), dtype=np.uint64)
@@ -126,8 +125,3 @@ def create_video(events: EventBuffer, save_filename: str, resolution=(1280, 720)
         
         out.write(img_c)
     out.release()
-    
-
-
-print_event_info(load_hdf5("../data/output/spinning_ball.hdf5"))
-# create_video(load_hdf5("../data/output/spinning_ball.hdf5"), "../data/output/spinning_ball_events2.avi", resolution=(1280, 720), fps=20.0, tw=1000)

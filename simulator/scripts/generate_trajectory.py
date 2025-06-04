@@ -11,6 +11,8 @@ and the output video. The most important ones are:
 
 """
 import bpy
+import bpy_extras
+from bpy_extras import view3d_utils
 import os
 import cv2
 import tqdm as pbar
@@ -21,6 +23,7 @@ sys.path.append("../src")
 from dvs_sensor import *
 from dvs_sensor_blender import Blender_DvsSensor
 import rotations
+import eventIO
 
 # ---------------------------------------------------- Parameters ---------------------------------------------------
 
@@ -42,13 +45,20 @@ output_name = "spinning_ball"          # name for the hdf5 file and the video
 # general settings:
 generate_video = True
 generate_hdf5 = True
+generate_event_video = False           # Should a event video be generated as well
 save_blender = False
 simulate = True                        # set False if just the blender file is needed
 random_rotation = True                 # set False if the ball should rotate as manually specified
 random_rps = False                     # not supported yet
+save_position = True                   # Should the position ad diameter in pixels be saved
+
+# Ground truth settings (save_position must be True)
+render_box = True                      # Should we render the bounding box inside the video (Debug)
+approx_size = 250                      # Approx size of the ball in pixels (TODO find better solution)
+approx_center_offset = 120             # Approx y-difference between calculated center and real center (TODO find better solution)
 
 # Simulation settings:
-total_frames = 300                     # high enough to cover rotation
+total_frames = 2                       # high enough to cover rotation
 rps = 20                               # rotations per second
 total_rotations = 2                    # total rotations util the end of the simulation
 video_length = total_rotations / rps   # length of the video in seconds
@@ -57,7 +67,7 @@ ball_speed = 0.5                       # how much the ball moves [m/s]
 ball_start = (-3, -3, 0)               # start position of the ball
 ball_end = (3, 5, 0)                   # end position of the ball
 rotation_axis = (0, 1, 1)              # axis of rotation (only if not random rotation)
-video_fps = fps                        # video will be slow-mo so it is actually viewable
+video_fps = 20                         # video will be slow-mo so it is actually viewable
 
 # Camera settings: (position and rotation from blender scene)
 resolution_x = 1280
@@ -67,11 +77,6 @@ focal_length = 8.0  # (mm)
 
 # Event Camera settings
 
-
-# Variables
-# ball = bpy.data.objects[ball_name]
-# scene = bpy.context.scene
-# event_camera = None
 
 
 def init_scene():
@@ -152,7 +157,30 @@ def generate_keyframes(ball, rotation: rotations.Rotation) -> None:
 
 
 
-def simulate(event_camera):
+def get_screen_positions(ball):
+    ''' Returns the screen coords of the ball
+
+        This Funciton should return the screen coords of the ball, to use it in the ground truth file
+        The network should only get the ball-area as input
+
+        TODO: Fix this function:
+        It should include the correct middle of the ball.
+        It should also include the size of the window that should be cut out
+
+    '''
+    center = ball.location
+
+    screen_coord = bpy_extras.object_utils.world_to_camera_view(
+        scene=bpy.context.scene,
+        obj=bpy.context.scene.camera,
+        coord=center
+    )
+
+    return screen_coord[0] * resolution_x, (screen_coord[1] * resolution_y) + approx_center_offset, approx_size
+
+
+
+def simulate(event_camera, ball):
     """ Executes the simulation
     
     """
@@ -168,10 +196,10 @@ def simulate(event_camera):
         if generate_video:
             # Initialize video writer
             fourcc = cv2.VideoWriter_fourcc("M", "J", "P", "G")
-            # video = cv2.VideoWriter(path_output + output_name + ".avi", fourcc, video_fps, (event_camera.def_x, event_camera.def_y))
+            video = cv2.VideoWriter(path_output + output_name + ".avi", fourcc, video_fps, (event_camera.def_x, event_camera.def_y))
 
         if generate_hdf5:
-            # TODO: save as hdf5
+            # init Event Buffer
             ev = EventBuffer(0)
         
         for frame in pbar.tqdm(range(bpy.context.scene.frame_start, bpy.context.scene.frame_end + 1), desc="Rendering frames"):
@@ -183,6 +211,16 @@ def simulate(event_camera):
             bpy.ops.render.render(write_still=True)
             img = cv2.imread(filename=file_name)
 
+            # calculate ball-positon
+            result = get_screen_positions(ball)
+            if result:
+                # temp -> draw bounding box
+                x, y, diameter = result
+                r = diameter / 2
+                top_left = (int(x - r), int(y - r))
+                bot_right = (int(x + r), int(y + r))
+                cv2.rectangle(img, top_left, bot_right, (0, 255, 0), 2)
+
             if generate_hdf5:
                 if frame == 0:
                     event_camera.init_image(img)
@@ -191,14 +229,18 @@ def simulate(event_camera):
                     pk = event_camera.update(img, delta_t)
                     ev.increase_ev(pk)
 
-            # if generate_video:
-                # video.write(img)
+            if generate_video:
+                video.write(img)
 
-        # if generate_video:
-            # video.release()
+        if generate_video:
+            video.release()
 
         if generate_hdf5:
             ev.write(path_output + output_name + ".dat")
+            eventIO.save_hdf5(ev, path_output + output_name + ".hdf5")
+
+        if generate_event_video:
+            eventIO.create_video(ev, path_output + output_name + "_events.avi", (resolution_x, resolution_y), video_fps, tw=1000)
 
     # disable output redirection
     os.close(fd)
@@ -215,4 +257,4 @@ if __name__ == "__main__":
     event_camera = init_camera()
     rot = rotations.random_rotation()
     generate_keyframes(ball, rot)
-    simulate(event_camera)
+    simulate(event_camera, ball)

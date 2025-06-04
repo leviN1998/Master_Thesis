@@ -2,7 +2,6 @@ Simulator
 
 - Ground-truth files (also include time rps etc.)
 - find way to extract ball coordinates and size in screen coordinates
-- debug rendered-video
 - find good framerate and samples to have reasonable rendering times
 - check with david if spins are generated correctly
 - check if rps frame and video length calculations are reasonable
