@@ -130,6 +130,34 @@ def calculate_position_frame() -> int:
     return total_frames
 
 
+
+def create_rotations():
+    """ Creates Rotations in a cubic way, as discussed with David
+
+        TODO: move this function to the dataset-genration file, since it is relevant to the whole
+        dataset and not for just one simulation
+
+        A total amount of rotations is generated that have speeds in a specified range.
+        set the parameters accordingly    
+    """
+    n = 28 # points per axis
+    max_speed = 80   # maximum speed in rps
+    min_speed = 5    # necessary?
+    lin = np.linspace(-1, 1, n)
+    x, y, z = np.meshgrid(lin, lin, lin)
+    points = np.vstack([x.ravel(), y.ravel(), z.ravel()]).T
+
+    # cut out speeds that are not needed
+    distances = np.linalg.norm(points, axis=1)
+    points = points[(distances <= 1) & (distances >= (min_speed / max_speed))]
+    points = points * 80
+    # set n to have enough samples 
+    print(f"n: {n}, resulting rotations: {points.shape[0]}")
+    # rotation can be created this way:
+    return rotations.Rotation(points[0])
+
+
+
 def generate_keyframes(ball, rotation: rotations.Rotation) -> None:
     """ Generate keyframes to simulate object
     

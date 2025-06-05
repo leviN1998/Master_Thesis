@@ -41,6 +41,20 @@ class Rotation:
         self.theta = 0
         self.omega = 0
 
+    def __init__(self, x:float, y: float, z: float):
+        """ Constructor for a Rotation
+        
+            With this Constructor, a Rotation is initialized with a given axis (x, y, z)
+        """
+        self.set_axis(x, y, z)
+
+    def __init__(self, axis:np.ndarray):
+        """ Create Rotation from axis
+        
+            Overload with numpy array instead of values
+        """ 
+        self.set_axis(axis[0], axis[1], axis[2])
+
     def get_axis(self) -> np.ndarray:
         """Get the axis of rotation
         
@@ -53,6 +67,16 @@ class Rotation:
                          np.sin(self.phi) * np.cos(self.theta),
                          np.sin(self.theta)])
     
+    def set_axis(self, x:float, y:float, z:float) -> None:
+        """ Sets roation axis and speed
+        
+            The internal values are set in a way, that the rotation represents a
+            rotation around the given axis with a speed of the maginitude of the vector
+        """
+        self.theta = np.arcsin(z)
+        self.phi = np.arctan2(y, x)
+        self.omega = np.linalg.norm([x,y,z])
+    
     def get_angle(self) -> float:
         """Get the angle of rotation
         
@@ -62,6 +86,7 @@ class Rotation:
             float: Angle of rotation in radians
         """
         return self.omega
+    
     
 
 # TODO: Add other functions as needed
