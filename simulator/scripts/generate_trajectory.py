@@ -35,7 +35,7 @@ noise_paths = os.path.abspath(os.getcwd()) + "/../data/noise/"
 noise_paths = (noise_paths + "noise_pos_161lux.npy", noise_paths + "noise_pos_161lux.npy") # two paths needed to initialize
 
 # File names:
-object_name = "ball_moving.blend"
+object_name = "ball_moving_aligned.blend"
 ball_name = "Sphere"                   # Name of the object inside blender-scene
 camera_name = "Camera"                 # ...
 temp_name =   "temp/temp"                   # just the blender rendering file
@@ -57,14 +57,14 @@ render_box = True                      # Should we render the bounding box insid
 approx_size = 60                       # Approx size of the ball in pixels (TODO find better solution)
 
 # Simulation settings:
-total_frames = 2                       # high enough to cover rotation
+total_frames = 200                     # high enough to cover rotation
 rps = 20                               # rotations per second
 total_rotations = 2                    # total rotations util the end of the simulation
 video_length = total_rotations / rps   # length of the video in seconds
 fps = int(total_frames / video_length) # frames per second
 ball_speed = 0.5                       # how much the ball moves [m/s]
-ball_start = (-3, -3, 0)               # start position of the ball
-ball_end = (3, 5, 0)                   # end position of the ball
+ball_start = (0, 2.7, 0)               # start position of the ball
+ball_end = (0, -2.7, 0)                   # end position of the ball
 rotation_axis = (0, 1, 1)              # axis of rotation (only if not random rotation)
 video_fps = 20                         # video will be slow-mo so it is actually viewable
 
@@ -72,7 +72,8 @@ video_fps = 20                         # video will be slow-mo so it is actually
 resolution_x = 1280
 resolution_y = 720
 resolution_percentage = 100
-focal_length = 8.0  # (mm)
+focal_length = 50.0  # (mm)
+pixel_pitch = 0.025                     # Abstand zwischen pixeln im sensor (beinflusst FOV)
 
 # Event Camera settings
 
@@ -104,7 +105,7 @@ def init_camera():
     cam_rot = bpy.data.objects[camera_name].rotation_euler
     event_camera = Blender_DvsSensor("Sensor")
     event_camera.cam = bpy.data.objects[camera_name]
-    event_camera.set_sensor(nx=resolution_x, ny=resolution_y, pp=0.015)
+    event_camera.set_sensor(nx=resolution_x, ny=resolution_y, pp=pixel_pitch)
     event_camera.set_dvs_sensor(th_pos=0.15, th_neg=0.15, th_n=0.05, lat=500, tau=300, jit=100, bgn=0.0001)
     event_camera.set_sensor_optics(focal_length)
     bpy.context.scene.render.resolution_x = event_camera.def_x
@@ -192,9 +193,9 @@ def get_screen_positions(ball):
         This Funciton should return the screen coords of the ball, to use it in the ground truth file
         The network should only get the ball-area as input
 
-        TODO: Fix this function:
-        It should include the correct middle of the ball.
-        It should also include the size of the window that should be cut out
+        At the moment this only calculates the position in pixels.
+        Maybe it would be beneficial to also include the size of the ball ROI
+        -> This was buggy in the last implementation so just let it be a parameter for now
 
     '''
     center = bpy_extras.object_utils.world_to_camera_view(
