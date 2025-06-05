@@ -10,3 +10,4 @@ The files currently included are:
 * ball_moving.blend: ball placed in a scene with camera that can be used for the event simulation. The camera is placed at the same location as in the real
 lab. So it can be used to produce accurate simulations.
 * ball_moving_aligned.blend: Newest iteration of the scene, where the camera is placed at the axis, so we dont have any artifacts and distortions. More simple than the other version, maybe transition back.
+* easy_light.blend: Moved the lightsource behind the camera, so we dont trigger events from the shadow. Gives an easier dataset, to have a first start

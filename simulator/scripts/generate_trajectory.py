@@ -35,7 +35,7 @@ noise_paths = os.path.abspath(os.getcwd()) + "/../data/noise/"
 noise_paths = (noise_paths + "noise_pos_161lux.npy", noise_paths + "noise_pos_161lux.npy") # two paths needed to initialize
 
 # File names:
-object_name = "ball_moving_aligned.blend"
+object_name = "easy_light.blend"
 ball_name = "Sphere"                   # Name of the object inside blender-scene
 camera_name = "Camera"                 # ...
 temp_name =   "temp/temp"                   # just the blender rendering file
@@ -45,7 +45,7 @@ output_name = "spinning_ball"          # name for the hdf5 file and the video
 # general settings:
 generate_video = True
 generate_hdf5 = True
-generate_event_video = False           # Should a event video be generated as well
+generate_event_video = True            # Should a event video be generated as well
 save_blender = False
 simulate = True                        # set False if just the blender file is needed
 random_rotation = True                 # set False if the ball should rotate as manually specified
@@ -64,16 +64,17 @@ video_length = total_rotations / rps   # length of the video in seconds
 fps = int(total_frames / video_length) # frames per second
 ball_speed = 0.5                       # how much the ball moves [m/s]
 ball_start = (0, 2.7, 0)               # start position of the ball
-ball_end = (0, -2.7, 0)                   # end position of the ball
+ball_end = (0, -2.7, 0)                # end position of the ball
 rotation_axis = (0, 1, 1)              # axis of rotation (only if not random rotation)
 video_fps = 20                         # video will be slow-mo so it is actually viewable
+simulation_samples = 64                # light rays per pixel that blender will use
 
 # Camera settings: (position and rotation from blender scene)
 resolution_x = 1280
 resolution_y = 720
 resolution_percentage = 100
-focal_length = 50.0  # (mm)
-pixel_pitch = 0.025                     # Abstand zwischen pixeln im sensor (beinflusst FOV)
+focal_length = 9.0  # (mm)
+pixel_pitch = 0.0075                     # Abstand zwischen pixeln im sensor (beinflusst FOV)
 
 # Event Camera settings
 
@@ -111,6 +112,7 @@ def init_camera():
     bpy.context.scene.render.resolution_x = event_camera.def_x
     bpy.context.scene.render.resolution_y = event_camera.def_y
     bpy.context.scene.render.resolution_percentage = resolution_percentage
+    bpy.context.scene.eevee.taa_render_samples = simulation_samples
 
     bpy.context.scene.camera = event_camera.cam
     event_camera.set_position(cam_pos)
@@ -253,7 +255,7 @@ def simulate(event_camera, ball):
                 r = approx_size / 2
                 top_left = (int(x - r), int(y - r))
                 bot_right = (int(x + r), int(y + r))
-                cv2.rectangle(img, top_left, bot_right, (0, 255, 0), 2)
+                # cv2.rectangle(img, top_left, bot_right, (0, 255, 0), 2)
 
             if generate_hdf5:
                 if frame == 0:
