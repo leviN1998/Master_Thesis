@@ -41,19 +41,6 @@ class Rotation:
         self.theta = 0
         self.omega = 0
 
-    def __init__(self, x:float, y: float, z: float):
-        """ Constructor for a Rotation
-        
-            With this Constructor, a Rotation is initialized with a given axis (x, y, z)
-        """
-        self.set_axis(x, y, z)
-
-    def __init__(self, axis:np.ndarray):
-        """ Create Rotation from axis
-        
-            Overload with numpy array instead of values
-        """ 
-        self.set_axis(axis[0], axis[1], axis[2])
 
     def get_axis(self) -> np.ndarray:
         """Get the axis of rotation
@@ -76,6 +63,15 @@ class Rotation:
         self.theta = np.arcsin(z)
         self.phi = np.arctan2(y, x)
         self.omega = np.linalg.norm([x,y,z])
+
+
+    def set_axis(self, axis:np.ndarray) -> None:
+        """ Set roation axis and speed
+
+            Overload to include easy usage of np array
+        """
+        self.set_axis(axis[0], axis[1], axis[2])
+
     
     def get_angle(self) -> float:
         """Get the angle of rotation

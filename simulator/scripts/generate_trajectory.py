@@ -54,8 +54,7 @@ save_position = True                   # Should the position ad diameter in pixe
 
 # Ground truth settings (save_position must be True)
 render_box = True                      # Should we render the bounding box inside the video (Debug)
-approx_size = 250                      # Approx size of the ball in pixels (TODO find better solution)
-approx_center_offset = 120             # Approx y-difference between calculated center and real center (TODO find better solution)
+approx_size = 60                       # Approx size of the ball in pixels (TODO find better solution)
 
 # Simulation settings:
 total_frames = 2                       # high enough to cover rotation
@@ -154,7 +153,9 @@ def create_rotations():
     # set n to have enough samples 
     print(f"n: {n}, resulting rotations: {points.shape[0]}")
     # rotation can be created this way:
-    return rotations.Rotation(points[0])
+    r = rotations.Rotation()
+    r.set_axis(points[0])
+    return r
 
 
 
@@ -196,15 +197,19 @@ def get_screen_positions(ball):
         It should also include the size of the window that should be cut out
 
     '''
-    center = ball.location
-
-    screen_coord = bpy_extras.object_utils.world_to_camera_view(
+    center = bpy_extras.object_utils.world_to_camera_view(
         scene=bpy.context.scene,
         obj=bpy.context.scene.camera,
-        coord=center
+        coord=ball.location
     )
+    render = bpy.context.scene.render
+    res_x = render.resolution_x * render.resolution_percentage / 100
+    res_y = render.resolution_y * render.resolution_percentage / 100
 
-    return screen_coord[0] * resolution_x, (screen_coord[1] * resolution_y) + approx_center_offset, approx_size
+    pixel_x = center.x * res_x
+    pixel_y = (1 - center.y) * res_y
+
+    return pixel_x, pixel_y
 
 
 
@@ -243,8 +248,8 @@ def simulate(event_camera, ball):
             result = get_screen_positions(ball)
             if result:
                 # temp -> draw bounding box
-                x, y, diameter = result
-                r = diameter / 2
+                x, y = result
+                r = approx_size / 2
                 top_left = (int(x - r), int(y - r))
                 bot_right = (int(x + r), int(y + r))
                 cv2.rectangle(img, top_left, bot_right, (0, 255, 0), 2)
