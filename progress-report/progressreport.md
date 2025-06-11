@@ -1,7 +1,7 @@
 ---
 author: Levin Kolmar
 title: "Learning-based spin estimation of table tennis ball with an event camera"
-subtitle: "Progress report week 3"
+subtitle: "Progress report week 4"
 institute: "Cognitive Systems, University of Tübingen"
 documentclass: scrartcl
 papersize: a4
@@ -11,36 +11,25 @@ papersize: a4
 
 More work on the simulator: <br>
 
-* The simulator is now working more or less as visible in the videos on discord. <br>
-
-A simulation is created like this: total ammount of frames can be set to  e.g. 500 frames. Rotations per second can be set to eg 40 rps. The simulation
-will contain two rotations, therefore the simulation length is total_rot / rps. The fps are total_frames / sim_length. The corresponding video will have a different fps, because in real-time this would be too short. The simulation can be saved as video, hdf5 file and event video. The ground-truth-file contains 
-the rotation axis, rps and the per-frame screen-coords of the ball. (There is a nasty bug to fix).
+* Some changes to the simulation, as discussed in Discord <br>
+* Dataset generation picks values out of a table. Therefore process can be split to multiple machines and can also be paused/restarted.
+* Fist Dataset should only include top- and backspins in a range of 5 - 80 rps. See questions.
 
 
-# New ideas
 
 # Open questions
 
-* Framerates are just for blender to generate images where the event-simulator gets timestamps to interpolate. What would a good framerate be? 
-I recorded simulations for framerates of [300, 500, 1000, 1500] fps. The smallest one takes about 1:30 minutes to generate. There could be some improvements.
+* How much variation in the topspins should be included? At the moment vectors that have an angle < 20° to the horizontal axis are selected.
+* Initial Orientation of the ball should be random right? There are the options: 1. facing the camera. 2. totally random. Evenly spaced, eg. 10 different orientations per sample.
+* How to save ground-truth rotations. Relative to what? Easiest way would be relative to world-coordinate and save the ball direction, camera position and angle.
+* How many labels would be good for the basic dataset? [top, back]? 
+* Does the rps spacing make sense this way? Spins and rps are creted using points in a cube, as discussed last week. The resulting rps when filtering a cube with 40 points per edge are: [10, 14, 18, 19, 22, 23, 26, 27, 28, 30, 31, 32, 34, 35, 36, 39, 40, 43, 44, 45, 47, 48, 49, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79]. The distribution gets denser with increasing rps (this makes sense), but for the small numbers this effect is very strong. 
 
-* Is the way how the simulation works now a good idea? Fixed amount of frames and total spins, and the rest will adapt to those values.
 
-* What infomation should be inside the hdf5 file? Now it contains one array: events: [p, x, y, t]. 
-
-* Is the ball-speed even relevant? As long as the ball covers some distance.
-
-* What do you think of the size of the event videos in discord. Should the ball be smaller? Should it be smaller in terms of pixels? I could make it smaller,
-but zoom in, then it would cover less pixels.
-
-* Can we check if the spin generation is correct? (David)
 
 # Next steps
 
-* Fix Bugs for position extraction.
-* Adjust bias settings in the simulator.
-* Find configuration for first dataset.
+* Finish code for dataset creatin (almost done)
+* Fix details discussed this week
 * Simulate dataset
-
-# Bibliography
+* Start with first model learning on the simple dataset
