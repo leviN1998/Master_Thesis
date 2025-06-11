@@ -19,6 +19,7 @@ import tqdm as pbar
 import numpy as np
 import sys
 from mathutils import Vector
+import logging
 sys.path.append("../src")
 from dvs_sensor import *
 from dvs_sensor_blender import Blender_DvsSensor
@@ -30,7 +31,7 @@ import eventIO
 # paths:
 path_scene = os.path.abspath(os.getcwd()) + "/../data/scenes/"
 path_output = os.path.abspath(os.getcwd()) + "/../data/output/"
-path_logs = os.path.abspath(os.getcwd()) + "/../data/logs/"
+path_logs = os.path.abspath(os.getcwd()) + "/../data/output/logs/"
 noise_paths = os.path.abspath(os.getcwd()) + "/../data/noise/"
 noise_paths = (noise_paths + "noise_pos_161lux.npy", noise_paths + "noise_pos_161lux.npy") # two paths needed to initialize
 
@@ -39,7 +40,7 @@ object_name = "easy_light.blend"
 ball_name = "Sphere"                   # Name of the object inside blender-scene
 camera_name = "Camera"                 # ...
 temp_name =   "temp/temp"                   # just the blender rendering file
-log_name = "render.log"                # name of teh log file
+log_name = "render.log"                # name of the log file
 output_name = "spinning_ball"          # name for the hdf5 file and the video
 
 # general settings:
