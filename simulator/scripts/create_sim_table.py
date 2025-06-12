@@ -85,6 +85,17 @@ except:
     print("One of the folders exists already, or couldn't be created. Please fix!")
     # sys.exit()
 
+# create dummy files
+try:
+    with open(path + "config/" + "config.yaml", "w") as f:
+        f.write("TODO")
+    with open(path + "config/" + "scene.blend", "w") as f:
+        f.write("TODO")
+    with open(path + "config/" + "readme.md", "w") as f:
+        f.write("TODO")
+except:
+    print("One of the files could not be created. Please fix!")
+
 
 
 def create_rotations(n:int, max_speed:float=80, min_speed:float=5) -> np.ndarray:
