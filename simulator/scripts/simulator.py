@@ -62,7 +62,7 @@ class Simulator:
         """
         return 0
     
-    def genrate_keyframes(self):
+    def generate_keyframes(self):
         """ Generate keyframes to simulate object
     
         For the rotation only the axis is needed because the simulation is fixed

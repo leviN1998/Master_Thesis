@@ -64,8 +64,8 @@ total_rotations = 2                    # total rotations util the end of the sim
 video_length = total_rotations / rps   # length of the video in seconds
 fps = int(total_frames / video_length) # frames per second
 ball_speed = 0.5                       # how much the ball moves [m/s]
-ball_start = (0, 2.7, 0)               # start position of the ball
-ball_end = (0, -2.7, 0)                # end position of the ball
+ball_start = (0, 0.7, 0)               # start position of the ball
+ball_end = (0, -0.7, 0)                # end position of the ball
 rotation_axis = (0, 1, 1)              # axis of rotation (only if not random rotation)
 video_fps = 20                         # video will be slow-mo so it is actually viewable
 simulation_samples = 64                # light rays per pixel that blender will use
@@ -256,7 +256,7 @@ def simulate(event_camera, ball):
                 r = approx_size / 2
                 top_left = (int(x - r), int(y - r))
                 bot_right = (int(x + r), int(y + r))
-                # cv2.rectangle(img, top_left, bot_right, (0, 255, 0), 2)
+                cv2.rectangle(img, top_left, bot_right, (0, 255, 0), 2)
 
             if generate_hdf5:
                 if frame == 0:
@@ -273,7 +273,7 @@ def simulate(event_camera, ball):
             video.release()
 
         if generate_hdf5:
-            ev.write(path_output + output_name + ".dat")
+            # ev.write(path_output + output_name + ".dat")
             eventIO.save_hdf5(ev, path_output + output_name + ".hdf5")
 
         if generate_event_video:
