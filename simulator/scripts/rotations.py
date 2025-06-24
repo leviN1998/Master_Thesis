@@ -60,12 +60,17 @@ class Rotation:
             The internal values are set in a way, that the rotation represents a
             rotation around the given axis with a speed of the maginitude of the vector
         """
-        self.theta = np.arcsin(z)
-        self.phi = np.arctan2(y, x)
         self.omega = np.linalg.norm([x,y,z])
+        if self.omega == 0:
+            self.phi = 0
+            self.theta = 0
+            
+        else:
+            self.theta = np.arccos(z / self.omega)
+            self.phi = np.arctan2(y, x)
 
 
-    def set_axis(self, axis:np.ndarray) -> None:
+    def set_axis_np(self, axis:np.ndarray) -> None:
         """ Set roation axis and speed
 
             Overload to include easy usage of np array

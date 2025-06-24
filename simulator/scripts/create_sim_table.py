@@ -25,11 +25,12 @@ Parent:
     |   .   ...
     |
     |- tmp
-        |- render.log
-        |- simulation.log
-        |- image_tmp.png
-
-
+    |   |- render.log
+    |   |- simulation.log
+    |   |- image_tmp.png
+    |
+    |- noise
+        |- noise_neg_0.1lux.npy
 
     Important Files:
 
@@ -163,10 +164,11 @@ def create_top_back(n:int, max_speed:float=80, min_speed:float=5) -> np.ndarray:
     return points
     
 
+
 # --------------------------------------------------------------------------------------------------
 # TODO: clean up from here on
 # --------------------------------------------------------------------------------------------------
-
+'''
 
 samples = create_top_back(40)
 print(f"Created {samples.shape[0]} samples")
@@ -194,8 +196,8 @@ df = pd.DataFrame({
 })
 
 file_path = path + "config/" + "test.csv"
-df.to_csv(file_path, index=False)
+# df.to_csv(file_path, index=False)
 
-loaded = pd.read_csv(file_path)
-import ace_tools as tools; tools.display_dataframe_to_user(name="Spin Data", dataframe=loaded_df)
-file_path
+# loaded = pd.read_csv(file_path)
+
+'''
