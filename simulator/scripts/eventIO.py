@@ -59,6 +59,9 @@ def load_hdf5(filename: str) -> EventBuffer:
     """
     buf = EventBuffer(0)
     with h5py.File(filename, 'r') as f:
+        #print(f["CD"]["events"].dtype)
+        #print(f["CD"]["events"][0])
+
         data = f['events']
         buf.x = data['x'][:]
         buf.y = data['y'][:]
@@ -127,6 +130,7 @@ def create_video(events: EventBuffer, save_filename: str, resolution=(1280, 720)
     out.release()
 
 if __name__ == "__main__":
-    ev = load_hdf5("../data/output/spinning_ball.hdf5")
+    # ev = load_hdf5("../data/output/spinning_ball.hdf5")
+    ev = load_hdf5("../data/output/max-recording.hdf5")
     print_event_info(ev)
-    create_video(ev, "../data/output/spinning_ball_events.avi", resolution=(1280, 720), fps=20.0, tw=50)
+    create_video(ev, "../data/output/spinning_ball_events2.avi", resolution=(1280, 720), fps=20.0, tw=50)
