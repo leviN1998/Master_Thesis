@@ -322,6 +322,7 @@ class Simulator:
             It is responsible for setting up the scene, camera, and running the simulation.
         """
         self.logger.info(f"Starting simulation {self.simulation_nr} with spin: {self.spin.get_angle()} rps")
+        self.logger.debug(f"Delta t calculated as: {1000000.0 * (1.0 / self.fps)} us with fps: {self.fps} ")
 
         if self.generate_video:
             self.logger.debug("Generating video is enabled!")

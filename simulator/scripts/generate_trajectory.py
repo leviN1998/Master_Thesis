@@ -52,14 +52,15 @@ simulate = True                        # set False if just the blender file is n
 random_rotation = True                 # set False if the ball should rotate as manually specified
 random_rps = False                     # not supported yet
 save_position = True                   # Should the position ad diameter in pixels be saved
+finish_early = False                   # If True, the simulation will stop after 40 frames
 
 # Ground truth settings (save_position must be True)
-render_box = True                      # Should we render the bounding box inside the video (Debug)
+render_box = False                      # Should we render the bounding box inside the video (Debug)
 approx_size = 60                       # Approx size of the ball in pixels (TODO find better solution)
 
 # Simulation settings:
-total_frames = 200                     # high enough to cover rotation
-rps = 20                               # rotations per second
+total_frames = 500                     # high enough to cover rotation
+rps = 80                               # rotations per second
 total_rotations = 2                    # total rotations util the end of the simulation
 video_length = total_rotations / rps   # length of the video in seconds
 fps = int(total_frames / video_length) # frames per second
@@ -78,7 +79,7 @@ focal_length = 9.0  # (mm)
 pixel_pitch = 0.0075                     # Abstand zwischen pixeln im sensor (beinflusst FOV)
 
 # Event Camera settings
-
+# branch used: 3c4b99c
 
 
 def init_scene():
@@ -95,6 +96,9 @@ def init_scene():
     bpy.context.scene.frame_end = total_frames
     bpy.context.scene.render.fps = fps
     bpy.context.scene.render.image_settings.file_format = 'PNG'
+
+    print(f"Scene initialized with {total_frames} frames at {fps} fps and a video length of {video_length} seconds.")
+    print(f"Ball has a spin with {total_rotations} rotations at {rps} rps.")
     return ball
 
 
@@ -108,7 +112,19 @@ def init_camera():
     event_camera = Blender_DvsSensor("Sensor")
     event_camera.cam = bpy.data.objects[camera_name]
     event_camera.set_sensor(nx=resolution_x, ny=resolution_y, pp=pixel_pitch)
-    event_camera.set_dvs_sensor(th_pos=0.15, th_neg=0.15, th_n=0.05, lat=500, tau=300, jit=100, bgn=0.0001)
+    th_pos = 0.09  # lower positive threshold to increase event sensitivity
+    th_neg = 0.09  # lower negative threshold to increase event sensitivity
+    th_n = 0.03    # lower noise threshold to allow more events
+    lat = 20      # reduce latency for faster event response
+    tau = 20      # reduce time constant for quicker adaptation
+    jit = 10       # reduce jitter for more precise timing
+    bgn = 0.0005   # slightly increase background noise rate if needed
+    print(f"Initializing event camera with parameters: "
+          f"th_pos={th_pos}, th_neg={th_neg}, th_n={th_n}, "
+          f"lat={lat}, tau={tau}, jit={jit}, bgn={bgn}")
+    event_camera.set_dvs_sensor(th_pos=th_pos, th_neg=th_neg, th_n=th_n, lat=lat, tau=tau, jit=jit, bgn=bgn)
+    event_camera.ref = 50  # reduce refractory time to allow more frequent events
+    print(f"Event camera initialized with refractory time of {event_camera.ref} us")
     event_camera.set_sensor_optics(focal_length)
     bpy.context.scene.render.resolution_x = event_camera.def_x
     bpy.context.scene.render.resolution_y = event_camera.def_y
@@ -221,6 +237,8 @@ def simulate(event_camera, ball):
     """ Executes the simulation
     
     """
+
+    print(f"Delta t: {1000000.0 * (1.0 / fps)} us")
     # redirect output to log file
     logfile = path_logs + log_name
     open(logfile, 'a').close()
@@ -250,7 +268,7 @@ def simulate(event_camera, ball):
 
             # calculate ball-positon
             result = get_screen_positions(ball)
-            if result:
+            if result and render_box:
                 # temp -> draw bounding box
                 x, y = result
                 r = approx_size / 2
@@ -269,6 +287,10 @@ def simulate(event_camera, ball):
             if generate_video:
                 video.write(img)
 
+            if finish_early and frame >= 40:
+                print("Simulation finished early after 40 frames.")
+                break
+
         if generate_video:
             video.release()
 
@@ -277,12 +299,14 @@ def simulate(event_camera, ball):
             eventIO.save_hdf5(ev, path_output + output_name + ".hdf5")
 
         if generate_event_video:
-            eventIO.create_video(ev, path_output + output_name + "_events.avi", (resolution_x, resolution_y), video_fps, tw=1000)
+            eventIO.create_video(ev, path_output + output_name + "_events.avi", (resolution_x, resolution_y), fps=video_fps, tw=50)
 
     # disable output redirection
     os.close(fd)
     os.dup(old)
     os.close(old)
+
+    print(f"Number events: {ev.i}")
 
     if save_blender:
         bpy.ops.wm.save_as_mainfile(filepath=path_output + output_name + ".blend")

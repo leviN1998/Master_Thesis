@@ -125,3 +125,8 @@ def create_video(events: EventBuffer, save_filename: str, resolution=(1280, 720)
         
         out.write(img_c)
     out.release()
+
+if __name__ == "__main__":
+    ev = load_hdf5("../data/output/spinning_ball.hdf5")
+    print_event_info(ev)
+    create_video(ev, "../data/output/spinning_ball_events.avi", resolution=(1280, 720), fps=20.0, tw=50)

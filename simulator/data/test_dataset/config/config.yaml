@@ -11,7 +11,7 @@ total_rotations: 2                 # Total number of rotations to simulate
 ball_speed: 20.0                   # Speed of the ball in [m/s]   (100 kmh = 27.78 m/s)
 ball_start: [0.0, 0.7, 0.0]        # Starting position of the ball in [m, m, m]
 ball_end: [0.0, -0.7, 0.0]         # Ending position of the ball in [m, m, m]
-video_fps: 20                      # Frames per second for the video
+video_fps: 60                      # Frames per second for the video
 simulation_samples: 64             # Number of samples per frame for the simulation
 ball_name: "Sphere"                # Name of the ball object in Blender
 
