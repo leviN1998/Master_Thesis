@@ -56,6 +56,7 @@ class Simulator:
         self.generate_event_video = config["generate_event_video"]
         self.save_blender = config["save_blender"]
         self.random_orientation = config["random_orientation"]
+        self.fix_to_1_s = config["fix_to_1_s"]
 
         self.total_frames = config["total_frames"]
         self.total_rotations = config["total_rotations"]
@@ -74,6 +75,15 @@ class Simulator:
         self.focal_length = config["focal_length"]
         self.pixel_pitch = config["pixel_pitch"]
 
+        self.th_pos = config["th_pos"]
+        self.th_neg = config["th_neg"]
+        self.th_n = config["th_n"]
+        self.lat = config["lat"]
+        self.tau = config["tau"]
+        self.jit = config["jit"]
+        self.bgn = config["bgn"]
+        self.ref_period = config["ref_period"]
+
 
     def set_spin(self, spin:Rotation):
         """ Set the spin of the ball for the simulation 
@@ -88,7 +98,11 @@ class Simulator:
         self.spin = spin
         self.video_length = self.total_rotations / self.spin.get_angle()
         self.fps = int(self.total_frames / self.video_length)
-        self.logger.debug(f"Set spin: {self.spin.get_axis()} with angle: {self.spin.get_angle()} and omega: {self.spin.omega}")
+        if self.fix_to_1_s:
+            self.video_length = 1.0
+            self.fps = self.total_frames
+            self.logger.debug(f"Fixing video length to 1s, setting fps to total_frames real length is: {self.total_rotations / self.spin.get_angle()}")
+        self.logger.debug(f"Set spin: {self.spin.get_axis()} with angle: {self.spin.get_angle()} and omega: {self.spin.get_angle()}")
         self.logger.debug(f"Calculated video length: {self.video_length} seconds with fps: {self.fps} and total frames: {self.total_frames}")
 
 
@@ -116,6 +130,12 @@ class Simulator:
         self.scene.frame_end = self.total_frames
         self.scene.render.fps = self.fps
         self.scene.render.image_settings.file_format = 'PNG'
+
+        # set background
+        bpy.data.worlds["World"].use_nodes = True
+        bg = bpy.data.worlds["World"].node_tree.nodes["Background"]
+        bg.inputs[0].default_value = (0.1, 0.1, 0.1, 1)  # R, G, B, Alpha (black)
+        bg.inputs[1].default_value = 0.0
         
 
         
@@ -126,7 +146,8 @@ class Simulator:
         self.event_camera = Blender_DvsSensor("Sensor")
         self.event_camera.cam = bpy.data.objects["Camera"]
         self.event_camera.set_sensor(nx=self.resolution_x, ny=self.resolution_y, pp=self.pixel_pitch)
-        self.event_camera.set_dvs_sensor(th_pos=0.15, th_neg=0.15, th_n=0.05, lat=500, tau=300, jit=100, bgn=0.0001)
+        self.event_camera.set_dvs_sensor(th_pos=self.th_pos, th_neg=self.th_neg, th_n=self.th_n, lat=self.lat, tau=self.tau, jit=self.jit, bgn=self.bgn)
+        self.event_camera.ref = self.ref_period
         self.event_camera.set_sensor_optics(self.focal_length)
         self.scene.render.resolution_x = self.resolution_x
         self.scene.render.resolution_y = self.resolution_y
@@ -246,7 +267,7 @@ class Simulator:
             "rotation_x": [self.spin.get_axis()[0]],
             "rotation_y": [self.spin.get_axis()[1]],
             "rotation_z": [self.spin.get_axis()[2]],
-            "rotation_omega": [self.spin.omega],
+            "rotation_omega": [self.spin.get_angle()],
         }
         gt_df = pd.DataFrame(gt)
         gt_path = self.output_name + "ground_truth.csv"
@@ -258,8 +279,8 @@ class Simulator:
             "rotation_x": [self.spin.get_axis()[0]],
             "rotation_y": [self.spin.get_axis()[1]],
             "rotation_z": [self.spin.get_axis()[2]],
-            "rotation_omega": [self.spin.omega],
-            "ball_start_x": [self.ball_start[0]],
+            "rotation_omega": [self.spin.get_angle()],
+            "ball_start_x": [self.ball_start [0]],
             "ball_start_y": [self.ball_start[1]],
             "ball_start_z": [self.ball_start[2]],
             "ball_end_x": [self.ball_end[0]],
@@ -372,6 +393,13 @@ class Simulator:
             self.logger.info(f"Video saved to {self.output_name}frames.avi")
 
         if self.generate_hdf5:
+            if self.fix_to_1_s:
+                self.video_length = self.total_rotations / self.spin.get_angle()
+                self.logger.info(f"Recalculating timestamps to fit video length of {self.video_length} seconds")
+                self.logger.info(f"Result length is: {ev.get_ts()[-1] * self.video_length - ev.get_ts()[0] * self.video_length} us")
+                for i in range(ev.i):
+                    ev.ts[i] = int(ev.ts[i] * self.video_length)
+
             eventIO.save_hdf5(ev, self.output_name + "events.hdf5")
             self.logger.info(f"Events saved to {self.output_name}events.hdf5")
 

@@ -6,3 +6,8 @@ The simulations that are saved at the moment are:
 * ball_event_test: first test run of a spinning ball with event generation
 * different_framerates: event-videos collected using different framerate settings
 * temp: a folder where the temp image of blender is rendered into
+* logs: just a folder for some logs created by blender and/or python
+* background: simulations with different backgrounds: white, black and wall
+* max: snippet extracted from a recording by Max
+* tuning_ev: simulation with high rps, very short video-length and tuned ev-params
+* tuning_ev_better_light: same, but with better lighting conditions

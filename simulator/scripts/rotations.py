@@ -37,9 +37,9 @@ class Rotation:
         
         This constructor initializes the rotation matrix to the identity matrix.
         """
-        self.phi = 0
-        self.theta = 0
-        self.omega = 0
+        self.x = 0.0
+        self.y = 0.0
+        self.z = 0.0
 
 
     def get_axis(self) -> np.ndarray:
@@ -50,9 +50,9 @@ class Rotation:
         Returns:
             np.ndarray: [x, y, z] Axis of rotation
         """
-        return np.array([np.cos(self.phi) * np.cos(self.theta),
-                         np.sin(self.phi) * np.cos(self.theta),
-                         np.sin(self.theta)])
+        return np.array([self.x,
+                         self.y,
+                         self.z])
     
     def set_axis(self, x:float, y:float, z:float) -> None:
         """ Sets roation axis and speed
@@ -60,14 +60,9 @@ class Rotation:
             The internal values are set in a way, that the rotation represents a
             rotation around the given axis with a speed of the maginitude of the vector
         """
-        self.omega = np.linalg.norm([x,y,z])
-        if self.omega == 0:
-            self.phi = 0
-            self.theta = 0
-            
-        else:
-            self.theta = np.arccos(z / self.omega)
-            self.phi = np.arctan2(y, x)
+        self.x = x
+        self.y = y
+        self.z = z
 
 
     def set_axis_np(self, axis:np.ndarray) -> None:
@@ -86,9 +81,27 @@ class Rotation:
         Returns:
             float: Angle of rotation in radians
         """
-        return self.omega
+        return np.linalg.norm([self.x, self.y, self.z])
     
-    
+
+    def set_spherical(self, phi: float, theta: float, omega: float) -> None:
+        """Set the rotation using spherical coordinates
+        
+        This method sets the rotation using spherical coordinates.
+        
+        Args:
+            phi (float): Phi part of the exponential coordinates representation [0 -> 2π].
+            theta (float): Theta part of the exponential coordinates representation cos(theta) [-1 -> 1].
+            omega (float): angle of the rotation [0 -> 2π].
+        """
+        x = np.cos(phi) * np.cos(theta)
+        y = np.sin(phi) * np.cos(theta)
+        z = np.sin(theta)
+        vec = np.array([x, y, z])
+        vec /= np.linalg.norm(vec)
+        vec *= omega
+        self.set_axis_np(vec)
+
 
 # TODO: Add other functions as needed
 
