@@ -36,7 +36,7 @@ noise_paths = os.path.abspath(os.getcwd()) + "/../data/noise/"
 noise_paths = (noise_paths + "noise_pos_161lux.npy", noise_paths + "noise_pos_161lux.npy") # two paths needed to initialize
 
 # File names:
-object_name = "easy_light.blend"
+object_name = "bigger.blend"
 ball_name = "Sphere"                   # Name of the object inside blender-scene
 camera_name = "Camera"                 # ...
 temp_name =   "temp/temp"                   # just the blender rendering file
@@ -52,12 +52,12 @@ simulate = True                        # set False if just the blender file is n
 random_rotation = True                 # set False if the ball should rotate as manually specified
 random_rps = False                     # not supported yet
 save_position = True                   # Should the position ad diameter in pixels be saved
-finish_early = False                   # If True, the simulation will stop after 40 frames
-fix_to_1_s = True                      # If True, the simulation will be fixed to 1 second, and the timestamps will be adjusted later
+finish_early = False                  # If True, the simulation will stop after 40 frames
+fix_to_1_s = True                     # If True, the simulation will be fixed to 1 second, and the timestamps will be adjusted later
 
 # Ground truth settings (save_position must be True)
 render_box = False                      # Should we render the bounding box inside the video (Debug)
-approx_size = 60                       # Approx size of the ball in pixels (TODO find better solution)
+approx_size = 100                       # Approx size of the ball in pixels (TODO find better solution)
 
 # Simulation settings:
 total_frames = 500                     # high enough to cover rotation
@@ -66,8 +66,8 @@ total_rotations = 2                    # total rotations util the end of the sim
 video_length = total_rotations / rps   # length of the video in seconds
 fps = int(total_frames / video_length) # frames per second
 ball_speed = 0.5                       # how much the ball moves [m/s]
-ball_start = (0, 0.7, 0)               # start position of the ball
-ball_end = (0, -0.7, 0)                # end position of the ball
+ball_start = (0, 0.4, 0)               # start position of the ball
+ball_end = (0, -0.4, 0)                # end position of the ball
 rotation_axis = (0, 1, 1)              # axis of rotation (only if not random rotation)
 video_fps = 20                         # video will be slow-mo so it is actually viewable
 simulation_samples = 64                # light rays per pixel that blender will use
@@ -116,6 +116,13 @@ def init_scene():
 
     print(f"Scene initialized with {total_frames} frames at {fps} fps and a video length of {video_length} seconds.")
     print(f"Ball has a spin with {total_rotations} rotations at {rps} rps.")
+
+    # Make background white
+    bpy.data.worlds["World"].use_nodes = True
+    bg = bpy.data.worlds["World"].node_tree.nodes["Background"]
+    bg.inputs[0].default_value = (0.1, 0.1, 0.1, 1)  # R, G, B, Alpha (black)
+    bg.inputs[1].default_value = 0.0
+
     return ball
 
 
@@ -311,14 +318,21 @@ def simulate(event_camera, ball):
 
         if fix_to_1_s:
             # readjust the timestamps
+            ev.sort()
             video_length = total_rotations / rps
             print(f"Adjusting timestamps to {video_length} seconds")
+            print(f"Old timestamps: {ev.get_ts()[0]} - {ev.get_ts()[-1]}")
+            print(f"Result: {int(ev.get_ts()[-1] * video_length)} and not rounded: {ev.get_ts()[-1] * video_length}")
             for i in range(len(ev.ts)):
                 ev.ts[i] = int(ev.ts[i] * video_length)
+            
+            eventIO.print_event_info(ev)
 
         if generate_hdf5:
             # ev.write(path_output + output_name + ".dat")
+            ev.sort()
             eventIO.save_hdf5(ev, path_output + output_name + ".hdf5")
+            eventIO.print_event_info(ev)
 
         if generate_event_video:
             eventIO.create_video(ev, path_output + output_name + "_events.avi", (resolution_x, resolution_y), fps=video_fps, tw=50)

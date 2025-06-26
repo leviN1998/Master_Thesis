@@ -171,16 +171,16 @@ def print_event_info(event_buffer: EventBuffer):
     """
     print("Event Buffer Information:")
     print(f"Number of events: {event_buffer.i}")
-    print(f"Time range [us]: {event_buffer.ts[0]} - {event_buffer.ts[-1]}")
-    print(f"Total time [s]: {(event_buffer.ts[-1] - event_buffer.ts[0]) / 1e6:.6f}")
+    print(f"Time range [us]: {event_buffer.get_ts()[0]} - {event_buffer.get_ts()[-1]}")
+    print(f"Total time [s]: {(event_buffer.get_ts()[-1] - event_buffer.get_ts()[0]) / 1e6:.6f}")
     total_rounds = 2.0
-    print(f"Recalculated RPS (using {total_rounds} total rounds): {total_rounds / ((event_buffer.ts[-1] - event_buffer.ts[0]) / 1e6):.2f} RPS")
+    print(f"Recalculated RPS (using {total_rounds} total rounds): {total_rounds / ((event_buffer.get_ts()[-1] - event_buffer.get_ts()[0]) / 1e6):.2f} RPS")
     print(f"Resolution: {np.max(event_buffer.x) + 1} x {np.max(event_buffer.y) + 1}")
-    print(f"Polarity values: {np.unique(event_buffer.p)}")
-    print(f"Events per pixel: {event_buffer.i / ((np.max(event_buffer.x) + 1) * (np.max(event_buffer.y) + 1)):.2f}")
+    print(f"Polarity values: {np.unique(event_buffer.get_p())}")
+    print(f"Events per pixel: {event_buffer.i / ((np.max(event_buffer.get_x()) + 1) * (np.max(event_buffer.get_y()) + 1)):.2f}")
     print(f"Sample events (first 10):")
     for i in range(min(10, event_buffer.i)):
-        print(f"Event {i}: t={event_buffer.ts[i]}, x={event_buffer.x[i]}, y={event_buffer.y[i]}, p={event_buffer.p[i]}")
+        print(f"Event {i}: t={event_buffer.get_ts()[i]}, x={event_buffer.get_x()[i]}, y={event_buffer.get_y()[i]}, p={event_buffer.get_p()[i]}")
 
 
 
@@ -194,7 +194,6 @@ def create_video(events: EventBuffer, save_filename: str, resolution=(1280, 720)
             tw: time window for each frame in ms
     """
     fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
-    out = cv2.VideoWriter(save_filename, fourcc, fps, (resolution[1], resolution[0]))
     
     ts = events.get_ts()
     x = events.get_x()
@@ -223,31 +222,8 @@ def create_video(events: EventBuffer, save_filename: str, resolution=(1280, 720)
 
 
 if __name__ == "__main__":
-    #ev = load_hdf5("../data/output/spinning_ball.hdf5")
-    #print_event_info(ev)
-    #create_video(ev, "../data/output/spinning_ball_events2.avi", resolution=(1280, 720), fps=20.0, tw=50)
-
-    # Extract snippet from max
-    filename = "/data/lkolmar/max-recording.hdf5"
-    ev = EventBuffer(0)
-    with h5py.File(filename, 'r') as f:
-        
-        data = f['/CD/events']
-        ev.x = data['x'][:]
-        ev.y = data['y'][:]
-        ev.p = data['p'][:]
-        ev.ts = data['t'][:]
-        ev.i = ev.ts.shape[0]
-
+    ev = load_hdf5("../data/output/spinning_ball.hdf5")
+    for i in ev.ts:
+        if i > 0:
+            print(i)
     print_event_info(ev)
-    start_ts = 2020000
-    end_ts =   2208000
-    ev2 = EventBuffer(0)
-    for i in range(ev.i):
-        if start_ts <= ev.ts[i] <= end_ts:
-            ev2.add(ev.ts[i], ev.y[i], ev.x[i], ev.p[i])
-    
-    ev2.sort()
-    print_event_info(ev2)
-    create_video(ev2, "../data/output/spinning_ball_events2.avi", resolution=(1280, 720), fps=20.0, tw=50)
-    save_hdf5(ev2, "../data/output/max-recording-snippet.hdf5", resolution=(1280, 720))
