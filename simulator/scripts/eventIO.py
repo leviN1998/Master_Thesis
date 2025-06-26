@@ -223,7 +223,31 @@ def create_video(events: EventBuffer, save_filename: str, resolution=(1280, 720)
 
 
 if __name__ == "__main__":
-    # ev = load_hdf5("../data/output/spinning_ball.hdf5")
-    ev = load_hdf5("/data/lkolmar/metavision_exp.hdf5")
+    #ev = load_hdf5("../data/output/spinning_ball.hdf5")
+    #print_event_info(ev)
+    #create_video(ev, "../data/output/spinning_ball_events2.avi", resolution=(1280, 720), fps=20.0, tw=50)
+
+    # Extract snippet from max
+    filename = "/data/lkolmar/max-recording.hdf5"
+    ev = EventBuffer(0)
+    with h5py.File(filename, 'r') as f:
+        
+        data = f['/CD/events']
+        ev.x = data['x'][:]
+        ev.y = data['y'][:]
+        ev.p = data['p'][:]
+        ev.ts = data['t'][:]
+        ev.i = ev.ts.shape[0]
+
     print_event_info(ev)
-    create_video(ev, "../data/output/spinning_ball_events2.avi", resolution=(1280, 720), fps=20.0, tw=50)
+    start_ts = 2020000
+    end_ts =   2208000
+    ev2 = EventBuffer(0)
+    for i in range(ev.i):
+        if start_ts <= ev.ts[i] <= end_ts:
+            ev2.add(ev.ts[i], ev.y[i], ev.x[i], ev.p[i])
+    
+    ev2.sort()
+    print_event_info(ev2)
+    create_video(ev2, "../data/output/spinning_ball_events2.avi", resolution=(1280, 720), fps=20.0, tw=50)
+    save_hdf5(ev2, "../data/output/max-recording-snippet.hdf5", resolution=(1280, 720))

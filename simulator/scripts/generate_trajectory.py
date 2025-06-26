@@ -53,6 +53,7 @@ random_rotation = True                 # set False if the ball should rotate as 
 random_rps = False                     # not supported yet
 save_position = True                   # Should the position ad diameter in pixels be saved
 finish_early = False                   # If True, the simulation will stop after 40 frames
+fix_to_1_s = True                      # If True, the simulation will be fixed to 1 second, and the timestamps will be adjusted later
 
 # Ground truth settings (save_position must be True)
 render_box = False                      # Should we render the bounding box inside the video (Debug)
@@ -79,7 +80,22 @@ focal_length = 9.0  # (mm)
 pixel_pitch = 0.0075                     # Abstand zwischen pixeln im sensor (beinflusst FOV)
 
 # Event Camera settings
+th_pos = 0.1                            # on threshold 
+th_neg = 0.1                            # off threshold
+th_n = 0.13                             # noise threshold                                     
+lat = 400                               # latency
+tau = 400                               # time constant
+jit = 100                               # jitter
+bgn = 0.0001                            # background noise
+ref_period = 50                         # ref-time of the event camera
+
+
+
 # branch used: 3c4b99c
+
+if fix_to_1_s:
+    video_length = 1.0  # fix video length to 1 second
+    fps = total_frames  # set fps to total frames
 
 
 def init_scene():
@@ -97,6 +113,7 @@ def init_scene():
     bpy.context.scene.render.fps = fps
     bpy.context.scene.render.image_settings.file_format = 'PNG'
 
+
     print(f"Scene initialized with {total_frames} frames at {fps} fps and a video length of {video_length} seconds.")
     print(f"Ball has a spin with {total_rotations} rotations at {rps} rps.")
     return ball
@@ -112,18 +129,11 @@ def init_camera():
     event_camera = Blender_DvsSensor("Sensor")
     event_camera.cam = bpy.data.objects[camera_name]
     event_camera.set_sensor(nx=resolution_x, ny=resolution_y, pp=pixel_pitch)
-    th_pos = 0.09  # lower positive threshold to increase event sensitivity
-    th_neg = 0.09  # lower negative threshold to increase event sensitivity
-    th_n = 0.03    # lower noise threshold to allow more events
-    lat = 20      # reduce latency for faster event response
-    tau = 20      # reduce time constant for quicker adaptation
-    jit = 10       # reduce jitter for more precise timing
-    bgn = 0.0005   # slightly increase background noise rate if needed
     print(f"Initializing event camera with parameters: "
           f"th_pos={th_pos}, th_neg={th_neg}, th_n={th_n}, "
           f"lat={lat}, tau={tau}, jit={jit}, bgn={bgn}")
     event_camera.set_dvs_sensor(th_pos=th_pos, th_neg=th_neg, th_n=th_n, lat=lat, tau=tau, jit=jit, bgn=bgn)
-    event_camera.ref = 50  # reduce refractory time to allow more frequent events
+    event_camera.ref = ref_period  # reduce refractory time to allow more frequent events
     print(f"Event camera initialized with refractory time of {event_camera.ref} us")
     event_camera.set_sensor_optics(focal_length)
     bpy.context.scene.render.resolution_x = event_camera.def_x
@@ -291,8 +301,20 @@ def simulate(event_camera, ball):
                 print("Simulation finished early after 40 frames.")
                 break
 
+        # disable output redirection
+        os.close(fd)
+        os.dup(old)
+        os.close(old)
+
         if generate_video:
             video.release()
+
+        if fix_to_1_s:
+            # readjust the timestamps
+            video_length = total_rotations / rps
+            print(f"Adjusting timestamps to {video_length} seconds")
+            for i in range(len(ev.ts)):
+                ev.ts[i] = int(ev.ts[i] * video_length)
 
         if generate_hdf5:
             # ev.write(path_output + output_name + ".dat")
@@ -300,11 +322,6 @@ def simulate(event_camera, ball):
 
         if generate_event_video:
             eventIO.create_video(ev, path_output + output_name + "_events.avi", (resolution_x, resolution_y), fps=video_fps, tw=50)
-
-    # disable output redirection
-    os.close(fd)
-    os.dup(old)
-    os.close(old)
 
     print(f"Number events: {ev.i}")
 
