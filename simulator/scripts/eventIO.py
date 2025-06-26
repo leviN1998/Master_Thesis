@@ -11,6 +11,7 @@
 
 import sys
 import h5py
+import hdf5plugin
 import cv2
 import numpy as np
 # import the IECBS simulator
@@ -33,7 +34,7 @@ events.h5
 '''
 
 
-def save_hdf5(event_buffer: EventBuffer, filename: str):
+def save_hdf5_old(event_buffer: EventBuffer, filename: str):
     """ Save the event buffer as hdf5 file
         Args:
             event_buffer: EventBuffer to save
@@ -49,6 +50,100 @@ def save_hdf5(event_buffer: EventBuffer, filename: str):
         f.attrs['resolution'] = (5, 5) # TODO: add good attributes
 
 
+def save_hdf5(event_buffer: EventBuffer, filename: str, resolution=(1280, 720), chunk_size=10_000_000, 
+                compression=hdf5plugin.Blosc(cname="zstd", clevel=1, shuffle=hdf5plugin.Blosc.BITSHUFFLE),
+                clevel=1):
+    """ Save the event buffer as hdf5 file as specified by David
+        Args:
+            event_buffer: EventBuffer to save
+            filename: name of the file to save to
+            chunk_size (int): Number of events per chunk.
+            compression: Compression algorithm settings.
+            clevel (int): Compression level.
+    """
+    sensor = "IECBS Simulator"
+    width, height = resolution
+    with h5py.File(filename, 'w') as f:
+        event_group = f.create_group('events')
+        dset_x = event_group.create_dataset("x", shape=(0,), maxshape=(None,), dtype="uint16",
+                                            chunks=(chunk_size,), compression=compression, compression_opts=clevel)
+        dset_y = event_group.create_dataset("y", shape=(0,), maxshape=(None,), dtype="uint16",
+                                            chunks=(chunk_size,), compression=compression, compression_opts=clevel)
+        dset_p = event_group.create_dataset("p", shape=(0,), maxshape=(None,), dtype="uint8",
+                                            chunks=(chunk_size,), compression=compression, compression_opts=clevel)
+        dset_t = event_group.create_dataset("t", shape=(0,), maxshape=(None,), dtype="uint64",
+                                            chunks=(chunk_size,), compression=compression, compression_opts=clevel)
+        
+        f.create_dataset("t_offset", data=[0], maxshape=(None,))
+        f.attrs.update({"width": width, "height": height, "sensor": sensor})
+        f.create_dataset("bias", data=[0], maxshape=(None,)) # TODO: add good attributes
+
+        # save the events
+        dset_x.resize((event_buffer.i,))
+        dset_y.resize((event_buffer.i,))
+        dset_p.resize((event_buffer.i,))
+        dset_t.resize((event_buffer.i,))
+        dset_x[:] = event_buffer.get_x()
+        dset_y[:] = event_buffer.get_y()
+        dset_p[:] = event_buffer.get_p()
+        dset_t[:] = event_buffer.get_ts()
+
+        ms_to_idx = generate_ms_to_idx(dset_t[:])
+        dset_ms = f.create_dataset("ms_to_idx", shape=(len(ms_to_idx),), maxshape=(None,), dtype="uint64")
+        dset_ms[:] = ms_to_idx
+
+
+
+def generate_ms_to_idx(timestamps, last_index=0, previous_time_stamps=0):
+    """
+    Generate an optimized mapping of milliseconds to event indices.
+
+    Args:
+        timestamps (np.ndarray): Array of event timestamps.
+        last_index (int): Starting index for ms_to_idx array.
+        previous_time_stamps (int): Offset for previous timestamps.
+
+    Returns:
+        np.ndarray: Array mapping milliseconds to event indices.
+    """
+    if timestamps.size == 0:
+        return np.array([], dtype=np.int64)
+
+    timestamps_ms = timestamps // 1_000
+    unique_ms, first_indices = np.unique(timestamps_ms, return_index=True)
+
+    max_time = unique_ms[-1] if unique_ms.size > 0 else last_index
+    ms_to_idx = np.zeros(int(max_time + 1 - last_index), dtype=np.int64)
+
+    ms_to_idx[unique_ms - last_index] = first_indices + previous_time_stamps
+    return replace_zeros(ms_to_idx)
+
+
+def replace_zeros(arr):
+    """
+    Replaces zero values within the timestamps.
+
+    Args:
+        arr (np.ndarray): Array mapping milliseconds to event indices.
+
+    Returns:
+        np.ndarray: Cleaned array with filled zero entries.
+    """
+    mask = arr == 0
+    if mask.sum() == 0:
+        return arr
+    if arr.sum() == 0:
+        return arr
+
+    mask[0] = 0
+    valid_idx = np.where(~mask)[0]
+    valid_values = arr[valid_idx]
+    next_nonzero_idx = np.searchsorted(valid_idx, np.where(mask)[0])
+    arr[mask] = valid_values[next_nonzero_idx]
+
+    return arr
+
+
 
 def load_hdf5(filename: str) -> EventBuffer:
     """ Load the event buffer from an hdf5 file
@@ -59,9 +154,6 @@ def load_hdf5(filename: str) -> EventBuffer:
     """
     buf = EventBuffer(0)
     with h5py.File(filename, 'r') as f:
-        #print(f["CD"]["events"].dtype)
-        #print(f["CD"]["events"][0])
-
         data = f['events']
         buf.x = data['x'][:]
         buf.y = data['y'][:]
@@ -129,8 +221,9 @@ def create_video(events: EventBuffer, save_filename: str, resolution=(1280, 720)
         out.write(img_c)
     out.release()
 
+
 if __name__ == "__main__":
     # ev = load_hdf5("../data/output/spinning_ball.hdf5")
-    ev = load_hdf5("../data/output/max-recording.hdf5")
+    ev = load_hdf5("/data/lkolmar/metavision_exp.hdf5")
     print_event_info(ev)
     create_video(ev, "../data/output/spinning_ball_events2.avi", resolution=(1280, 720), fps=20.0, tw=50)
