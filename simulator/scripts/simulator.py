@@ -47,6 +47,11 @@ class Simulator:
         self.output_name = self.dataset_path + f"data/{self.num_string}/{self.num_string}_"
         self.ball_coords = []
 
+        try:
+            os.mkdir(self.dataset_path + "data/" + self.num_string)
+        except FileExistsError:
+            self.logger.error(f"Directory {self.dataset_path}data/{self.num_string} already exists. Please remove it before running the simulation again.")
+
     
     def set_config(self, config):
         """ Set the configuration for the simulation """
@@ -263,7 +268,7 @@ class Simulator:
         """ Save the ground truth data to a file
         """
         ground_truth_path = self.output_name + "ground_truth.yaml"
-        self.logger.info(f"Saving ground truth data to {ground_truth_path}")
+        self.logger.debug(f"Saving ground truth data to {ground_truth_path}")
         # Save ground truth (rotation info) as CSV
         gt = {
             "rotation_x": [self.spin.get_axis()[0]],
@@ -274,7 +279,7 @@ class Simulator:
         gt_df = pd.DataFrame(gt)
         gt_path = self.output_name + "ground_truth.csv"
         gt_df.to_csv(gt_path, index=False)
-        self.logger.info(f"Ground truth data saved to {gt_path}")
+        self.logger.debug(f"Ground truth data saved to {gt_path}")
 
         # Save metadata as CSV
         metadata = {
@@ -305,7 +310,7 @@ class Simulator:
         metadata_df = pd.DataFrame(metadata)
         metadata_path = self.output_name + "metadata.csv"
         metadata_df.to_csv(metadata_path, index=False)
-        self.logger.info(f"Metadata saved to {metadata_path}")
+        self.logger.debug(f"Metadata saved to {metadata_path}")
 
         # Save ball coordinates per frame as CSV
         coords_df = pd.DataFrame(self.ball_coords, columns=["frame", "screen_position"])
@@ -314,7 +319,7 @@ class Simulator:
         coords_df = coords_df.drop(columns=["screen_position"])
         coords_path = self.output_name + "ball_coords.csv"
         coords_df.to_csv(coords_path, index=False)
-        self.logger.info(f"Ball coordinates saved to {coords_path}")
+        self.logger.debug(f"Ball coordinates saved to {coords_path}")
 
     
     def redircet_output(self):
@@ -364,7 +369,8 @@ class Simulator:
             duration = end_ts - start_ts
             start_ts = time.time()
 
-            self.logger.progress(f"Simulation {self.simulation_nr}: Rendering frame {frame}/{self.scene.frame_end}  ({duration:.2f} s/frame)")
+            if frame % 100 == 0:
+                self.logger.progress(f"Simulation {self.simulation_nr}: Rendering frame {frame}/{self.scene.frame_end}  ({duration:.2f} s/frame)")
             self.scene.frame_set(frame)
 
             file_name = self.dataset_path + "tmp/image_tmp.png"
@@ -386,32 +392,28 @@ class Simulator:
             end_ts = time.time()
 
         self.restore_output()
-        try:
-            os.mkdir(self.dataset_path + "data/" + self.num_string)
-        except FileExistsError:
-            self.logger.error(f"Directory {self.dataset_path}data/{self.num_string} already exists. Please remove it before running the simulation again.")
 
         if self.generate_video:
             video.release()
-            self.logger.info(f"Video saved to {self.output_name}frames.avi")
+            self.logger.debug(f"Video saved to {self.output_name}frames.avi")
 
         if self.generate_hdf5:
             if self.fix_to_1_s:
                 self.video_length = self.total_rotations / self.spin.get_angle()
-                self.logger.info(f"Recalculating timestamps to fit video length of {self.video_length} seconds")
-                self.logger.info(f"Result length is: {ev.get_ts()[-1] * self.video_length - ev.get_ts()[0] * self.video_length} us")
+                self.logger.debug(f"Recalculating timestamps to fit video length of {self.video_length} seconds")
+                self.logger.debug(f"Result length is: {ev.get_ts()[-1] * self.video_length - ev.get_ts()[0] * self.video_length} us")
                 for i in range(ev.i):
                     ev.ts[i] = int(ev.ts[i] * self.video_length)
 
             eventIO.save_hdf5(ev, self.output_name + "events.hdf5")
-            self.logger.info(f"Events saved to {self.output_name}events.hdf5")
+            self.logger.debug(f"Events saved to {self.output_name}events.hdf5")
 
         if self.generate_event_video:
             eventIO.create_video(ev, self.output_name + "events.avi", (self.resolution_x, self.resolution_y), self.video_fps, tw=200)
-            self.logger.info(f"Event video saved to {self.output_name}events.avi")
+            self.logger.debug(f"Event video saved to {self.output_name}events.avi")
 
         if self.save_blender:
             bpy.ops.wm.save_as_mainfile(filepath=self.output_name + "scene.blend")
-            self.logger.info(f"Blender scene saved to {self.output_name}scene.blend")
+            self.logger.debug(f"Blender scene saved to {self.output_name}scene.blend")
 
         self.save_ground_truth()

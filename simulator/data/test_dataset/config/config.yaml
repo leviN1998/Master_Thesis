@@ -3,7 +3,7 @@ generate_video: true               # Generate frame-based video
 generate_hdf5: true                # Should events be saved
 generate_event_video: true         # Generate event-based video 
 save_blender: true                 # Save Blender scene
-random_orientation: false          # Randomize the initial orientation of the ball
+random_orientation: false           # Randomize the initial orientation of the ball
 fix_to_1_s: true                   # Fix the simulation to 1 second. recommended if using high rps and therefore low video-length
 
 # simulation settings

@@ -226,7 +226,7 @@ def create_topspin_table():
         'initial_rot_y': initial_orientations[:, 1],
         'initial_rot_z': initial_orientations[:, 2],
         'finished': False,
-        'path': ""
+        'path': "not set"
     })
 
     file_path = path + "config/" + "simulation.csv"
