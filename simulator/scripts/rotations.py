@@ -115,8 +115,9 @@ def random_rotation() -> Rotation:
         Rotation: A random rotation object
     """
     rot = Rotation()
-    rot.phi = np.random.uniform(0, 2 * np.pi)
+    phi = np.random.uniform(0, 2 * np.pi)
     cos_theta = np.random.uniform(-1, 1)
-    rot.theta = np.arccos(cos_theta)
-    rot.omega = np.random.uniform(0, 2 * np.pi)
+    theta = np.arccos(cos_theta)
+    omega = np.random.uniform(0, 2 * np.pi)
+    rot.set_spherical(phi, theta, omega)
     return rot

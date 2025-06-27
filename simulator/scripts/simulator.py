@@ -195,7 +195,9 @@ class Simulator:
             self.initial_rot = rotations.random_rotation()
 
         ax = self.initial_rot.get_axis()
-        angle = self.initial_rot.get_angle()
+        angle = self.initial_rot.get_angle() # this is in degrees
+        self.logger.debug(f"Initial rotation axis: {ax} with {angle} deg.")
+        angle = angle * np.pi / 180.0 # convert to radians
         self.ball.rotation_axis_angle = (angle, ax[0], ax[1], ax[2])
         # apply initial rotation
         bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
@@ -324,6 +326,7 @@ class Simulator:
         logfile = self.dataset_path + "tmp/render.log"
         with open(logfile, 'a') as f:
             f.write("\n\n========== NEW BLENDER OUTPUT ==========\n\n")
+            f.write(f"Simulation {self.simulation_nr} started at {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n\n")
         self.old = os.dup(sys.stdout.fileno())
         sys.stdout.flush()
         os.close(sys.stdout.fileno())
@@ -361,7 +364,7 @@ class Simulator:
             duration = end_ts - start_ts
             start_ts = time.time()
 
-            self.logger.progress(f"Rendering frame {frame}/{self.scene.frame_end}  ({duration:.2f} s/frame)")
+            self.logger.progress(f"Simulation {self.simulation_nr}: Rendering frame {frame}/{self.scene.frame_end}  ({duration:.2f} s/frame)")
             self.scene.frame_set(frame)
 
             file_name = self.dataset_path + "tmp/image_tmp.png"
