@@ -370,7 +370,7 @@ class Simulator:
             start_ts = time.time()
 
             if frame % 100 == 0:
-                self.logger.progress(f"Simulation {self.simulation_nr}: Rendering frame {frame}/{self.scene.frame_end}  ({duration:.2f} s/frame)")
+                self.logger.progress(f"Simulation {self.simulation_nr}: Rendering frame {frame}/{self.scene.frame_end}  ({duration:.2f} s/frame, {int(duration*self.total_frames)}s total.)")
             self.scene.frame_set(frame)
 
             file_name = self.dataset_path + "tmp/image_tmp.png"

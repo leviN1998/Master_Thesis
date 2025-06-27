@@ -61,7 +61,10 @@ if __name__ == "__main__":
         estimated_time = (n - i - 1) * duration_s
         estimated_time /= 60
         estimated_time /= 60
-        basic_logger.info(f"Simulation {index} finished in {time.time() - start_ts:.2f} seconds. Estimated time left {estimated_time:.2f} hours.")
+        basic_logger.info(
+            f"Simulation {index} finished in {time.time() - start_ts:.2f} seconds. "
+            f"Estimated time left {int(estimated_time)}h {((estimated_time - int(estimated_time)) * 60):1f}m."
+        )
 
     basic_logger.info("All simulations finished.")
     basic_logger.close()
