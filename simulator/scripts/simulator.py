@@ -36,7 +36,7 @@ def get_num_string(number: int):
 
 
 class Simulator:
-    def __init__(self, config, dataset_path, spin:Rotation, initial_rot: Rotation, logger, simulation_nr=0):
+    def __init__(self, config, dataset_path, spin:Rotation, initial_rot: Rotation, logger, simulation_nr=0, pid=0):
         self.logger = logger
         self.set_config(config)
         self.simulation_nr = simulation_nr
@@ -46,6 +46,7 @@ class Simulator:
         self.num_string = get_num_string(self.simulation_nr)
         self.output_name = self.dataset_path + f"data/{self.num_string}/{self.num_string}_"
         self.ball_coords = []
+        self.pid = pid
 
         try:
             os.mkdir(self.dataset_path + "data/" + self.num_string)
@@ -328,7 +329,7 @@ class Simulator:
             This function redirects the blender output to a file, so that the logs can be saved
             and used for debugging purposes.
         """
-        logfile = self.dataset_path + "tmp/render.log"
+        logfile = self.dataset_path + f"tmp/pid_{self.pid}/render.log"
         with open(logfile, 'a') as f:
             f.write("\n\n========== NEW BLENDER OUTPUT ==========\n\n")
             f.write(f"Simulation {self.simulation_nr} started at {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n\n")
@@ -373,7 +374,7 @@ class Simulator:
                 self.logger.progress(f"Simulation {self.simulation_nr}: Rendering frame {frame}/{self.scene.frame_end}  ({duration:.2f} s/frame, {int(duration*self.total_frames)}s total.)")
             self.scene.frame_set(frame)
 
-            file_name = self.dataset_path + "tmp/image_tmp.png"
+            file_name = self.dataset_path + f"tmp/pid_{self.pid}/image_tmp.png"
             self.scene.render.filepath = file_name
             bpy.ops.render.render(write_still=True)
             img = cv2.imread(file_name)
