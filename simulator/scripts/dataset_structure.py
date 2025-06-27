@@ -204,7 +204,7 @@ def create_topspin_table():
         This function creates a table that contains all rotations and initial orientations for the topspin dataset.
         The table is saved as a CSV file in the config folder of the dataset.
     """
-    path = "../data/test_dataset/"
+    path = "/data/lkolmar/datasets/topspin/"
     try:
         os.mkdir(path)
     except FileExistsError:

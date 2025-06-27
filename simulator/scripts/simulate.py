@@ -16,7 +16,7 @@ import sys
 import time
 
 
-path = "/data/datasets/topspin/"
+path = "/data/lkolmar/datasets/topspin/"
 
 
 if __name__ == "__main__":
