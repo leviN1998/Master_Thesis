@@ -405,7 +405,8 @@ class Simulator:
                 for i in range(ev.i):
                     ev.ts[i] = int(ev.ts[i] * self.video_length)
 
-            eventIO.save_hdf5(ev, self.output_name + "events.hdf5")
+            bias = [self.th_pos, self.th_neg, self.th_n, self.lat, self.tau, self.jit, self.bgn, self.ref_period]
+            eventIO.save_hdf5(ev, self.output_name + "events.hdf5", bias)
             self.logger.debug(f"Events saved to {self.output_name}events.hdf5")
 
         if self.generate_event_video:

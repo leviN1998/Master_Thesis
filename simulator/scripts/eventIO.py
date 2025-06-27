@@ -50,13 +50,14 @@ def save_hdf5_old(event_buffer: EventBuffer, filename: str):
         f.attrs['resolution'] = (5, 5) # TODO: add good attributes
 
 
-def save_hdf5(event_buffer: EventBuffer, filename: str, resolution=(1280, 720), chunk_size=10_000_000, 
+def save_hdf5(event_buffer: EventBuffer, filename: str, bias, resolution=(1280, 720), chunk_size=10_000_000, 
                 compression=hdf5plugin.Blosc(cname="zstd", clevel=1, shuffle=hdf5plugin.Blosc.BITSHUFFLE),
                 clevel=1):
     """ Save the event buffer as hdf5 file as specified by David
         Args:
             event_buffer: EventBuffer to save
             filename: name of the file to save to
+            bias: Bias values (simulator) to save in the file. (th_pos, th_neg, th_n, lat, tau, jit, bgn, refp)
             chunk_size (int): Number of events per chunk.
             compression: Compression algorithm settings.
             clevel (int): Compression level.
@@ -76,7 +77,7 @@ def save_hdf5(event_buffer: EventBuffer, filename: str, resolution=(1280, 720), 
         
         f.create_dataset("t_offset", data=[0], maxshape=(None,))
         f.attrs.update({"width": width, "height": height, "sensor": sensor})
-        f.create_dataset("bias", data=[0], maxshape=(None,)) # TODO: add good attributes
+        f.create_dataset("bias", data=bias, maxshape=(None,)) # TODO: add good attributes
 
         # save the events
         dset_x.resize((event_buffer.i,))

@@ -16,7 +16,7 @@ import sys
 import time
 
 
-path = "../data/test_dataset/"
+path = "/data/datasets/topspin/"
 
 
 if __name__ == "__main__":
@@ -31,6 +31,10 @@ if __name__ == "__main__":
 
     print("Applying offset")
     print(simulation_df[offset:offset + 100])
+
+    if n == 0:
+        n = len(simulation_df) - offset
+        print(f"Setting n to {n} (length of simulation_df - offset)")
 
     basic_logger = logger.Logger(path=path + "tmp/")
     basic_logger.info(f"Running {n} simulations with offset {offset}")
