@@ -14,6 +14,7 @@ import cv2
 sys.path.append("../src")
 from dvs_sensor import *
 from dvs_sensor_blender import Blender_DvsSensor
+sys.path.append("../../utils/")
 import eventIO
 import rotations
 from rotations import Rotation

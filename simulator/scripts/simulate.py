@@ -10,9 +10,10 @@ import numpy as np
 import yaml
 import pandas as pd
 import simulator
+import sys
+sys.path.append("../../utils/")
 import rotations
 import logger
-import sys
 import time
 import os
 
