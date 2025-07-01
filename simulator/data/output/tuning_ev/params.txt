@@ -1,8 +1,0 @@
-th_pos = 0.09 
-th_neg = 0.09 
-th_n = 0.03   
-lat = 20      
-tau = 20      
-jit = 10      
-bgn = 0.0005  
-event_camera.ref = 50  

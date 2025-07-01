@@ -1,1 +1,0 @@
-To reach 90% accuracy on the test set, using only one epoch would be sufficient. It results in a accuracy of 98.16%
