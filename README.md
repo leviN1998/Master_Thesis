@@ -25,9 +25,13 @@ The directory structure of this project looks like this:
 │   ├── eval.yaml             <- Main config for evaluation
 │   └── train.yaml            <- Main config for training
 │
-├── data                   <- Project data
-|   ├── datasets           <- datasets (for large datasets only the config and info files)
-|   └── simulator          <- data for the simulator
+├── data                         <- Project data
+|   ├── datasets                 <- datasets (for large datasets only the config and info files)
+|   |   ├── example_dataset      <- example dataset to copy configs from
+|   |   └── topspin              <- first synthetic dataset containing only top- and backspins
+|   ├── scenes                   <- different blender files
+|   ├── simulator                <- data for the simulator (mainly output and legacy data)
+|   └── textures                 <- textures (mainly used by blender)
 |
 ├── doc
 |   ├── papers             <- collection of usefull papers
