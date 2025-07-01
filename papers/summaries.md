@@ -39,11 +39,17 @@ Here i want to add my summaries of all papers that i had to read.
 
 
 ## FireNet (Scheerlinck)
-* TODO
+* Used for video reconstruction
+* Inputs are temporal bins. Each event cotributes its polarity to the two closest temporal bins.
+* Architecture with GRU cells
 
 
 ## Learning to Detect Objects with a 1 Megapixel Event Camera (Perot)
-* TODO
+* I think the firenet model is better suited than this one
+* Detailed description of event-representation and differenc choices
+* Uses end to end aproach -> Events are used directly instead of converting them into grayscale
+* Different input representations: Histograms of events, Time Surfaces, Event Volumes.
+
 
 
 ## Detecting Stable Keypoints from Events through Image Gradient Prediction (Chiberre)
@@ -64,3 +70,7 @@ Here i want to add my summaries of all papers that i had to read.
 
 ## GG-SSMs: Graph-Generating State Space Models
 * TODO
+
+
+## Timo Stoff
+* Some very useful event stuff (data-augmentation, representation etc.)

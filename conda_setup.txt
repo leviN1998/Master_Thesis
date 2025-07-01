@@ -1,4 +1,4 @@
-# Conda setup:
+# Conda setup (Simulator):
 
 Resources: 
     https://developer.blender.org/docs/handbook/building_blender/linux/
@@ -40,3 +40,16 @@ Resources:
     pip install pyaml
     pip install h5py
     pip install hdf5plugin
+
+
+# Conda setup (Learning):
+
+1. create env
+
+2. install python modules:
+    conda install python
+    pip install torch torchvision torchaudio
+    pip install ipykernel matplotlib
+    pip install h5py
+    pip install hdf5plugin opencv-python pandas
+    conda install conda-forge::loris

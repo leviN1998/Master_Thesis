@@ -1,7 +1,7 @@
 # Damien JOUBERT 17-01-2020
 import numpy as np
 import os.path
-from dat_files import write_event_dat, write_event_es, write_event_csv, load_dat_event
+# from dat_files import write_event_dat, write_event_es, write_event_csv, load_dat_event
 
 
 class EventBuffer():
@@ -230,8 +230,9 @@ class EventBuffer():
         """
         # sort events to have a monotonically timestamps
         self.sort()
+        print("Error: Writing with event_buffer is not supported. Use eventIO instead.")
 
-        ext = os.path.splitext(filename)[1]
+        '''ext = os.path.splitext(filename)[1]
         if ext == '.dat':
             write_event_dat(filename, self.ts[:self.i], self.x[:self.i],
                             self.y[:self.i], self.p[:self.i],
@@ -242,4 +243,4 @@ class EventBuffer():
                            event_type=event_type, width=width, height=height)
         elif ext == '.csv':
             write_event_csv(filename, self.ts[:self.i], self.x[:self.i],
-                            self.y[:self.i], self.p[:self.i])
+                            self.y[:self.i], self.p[:self.i])'''

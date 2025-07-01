@@ -16,7 +16,7 @@ import cv2
 import numpy as np
 # import the IECBS simulator
 sys.path.append("../src")
-from dvs_sensor import *
+from event_buffer import EventBuffer
 
 
 '''
