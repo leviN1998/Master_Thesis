@@ -10,6 +10,9 @@ Here i want to add my summaries of all papers that i had to read.
 
 ## ICNS Simulator
 
+## Hydra template
+https://github.com/ashleve/lightning-hydra-template
+
 ## Spin Detection in Robotic Table Tennis (Tebbe)
 * 3 different aproaches, background-difference to find logo. CNN to predict orientation of Logo. Evaluate trajectory and derife from magnus force (highest accuracy)
 * For CNN, smallest ResNet architecture used. Additional two fully connected (512) at the end
