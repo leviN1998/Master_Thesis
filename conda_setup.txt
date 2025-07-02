@@ -55,3 +55,4 @@ Resources:
     conda install conda-forge::loris
     pip install -r requirements.txt
     pip install wandb
+    pip install tonic

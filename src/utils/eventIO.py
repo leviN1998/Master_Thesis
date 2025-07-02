@@ -15,8 +15,7 @@ import hdf5plugin
 import cv2
 import numpy as np
 # import the IECBS simulator
-sys.path.append("../src")
-from event_buffer import EventBuffer
+from src.utils.IEBCS.event_buffer import EventBuffer
 
 
 '''
@@ -223,8 +222,6 @@ def create_video(events: EventBuffer, save_filename: str, resolution=(1280, 720)
 
 
 if __name__ == "__main__":
-    ev = load_hdf5("../data/output/spinning_ball.hdf5")
-    for i in ev.ts:
-        if i > 0:
-            print(i)
+    ev = load_hdf5("/data/lklomar/datasets/topspin/data/00034/00034_events.hdf5")
     print_event_info(ev)
+    create_video(ev, "data/simulator/output/max/simulation_compare.avi", resolution=(1280, 720), fps=30.0, tw=100)

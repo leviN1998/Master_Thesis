@@ -26,6 +26,7 @@ https://github.com/ashleve/lightning-hydra-template
 * Has a dataset -> maybe convert to ev and train on
 * Uses dotted Balls
 * Think about orientation aproach -> multiple pipeline steps (Very framebased thinking)
+* Uses a custom ball spinner for ground truth generation
 
 
 ## Table tennis ball spin estimation with an event camera (Gossard)
@@ -35,6 +36,7 @@ https://github.com/ashleve/lightning-hydra-template
 * Kalman filter to estimate velocity and radius
 * Extract logo events (Trash edges)
 * -> Understand Spin estimation part
+* ball spinner and ball thrower used as ground truth
 
 
 ## Event-based Ball Spin Estimation in Sports (Nakabayashi)
