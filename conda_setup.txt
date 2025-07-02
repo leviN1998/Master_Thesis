@@ -54,3 +54,4 @@ Resources:
     pip install hdf5plugin opencv-python pandas
     conda install conda-forge::loris
     pip install -r requirements.txt
+    pip install wandb
