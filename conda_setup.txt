@@ -40,6 +40,8 @@ Resources:
     pip install pyaml
     pip install h5py
     pip install hdf5plugin
+    pip install ipykernel
+    pip install rootutils
 
 
 # Conda setup (Learning):

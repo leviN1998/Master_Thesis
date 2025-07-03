@@ -11,10 +11,12 @@ import sys
 import numpy as np
 import bpy_extras
 import cv2
-sys.path.append("../src")
+sys.path.append("../utils")
+sys.path.append("../utils/IEBCS")
+sys.path.append("../src/utils/IEBCS") # debug
+sys.path.append("../src/utils")       # debug
 from dvs_sensor import *
 from dvs_sensor_blender import Blender_DvsSensor
-sys.path.append("../../utils/")
 import eventIO
 import rotations
 from rotations import Rotation
@@ -63,12 +65,19 @@ class Simulator:
         self.generate_event_video = config["generate_event_video"]
         self.save_blender = config["save_blender"]
         self.random_orientation = config["random_orientation"]
+        self.stop_early = config["stop_early"]
         self.fix_to_1_s = config["fix_to_1_s"]
+        self.fix_total_rotations = config["fix_total_rotations"]
+        self.fix_total_frames = config["fix_total_frames"]
 
+        self.max_total_frames = config["max_total_frames"]
         self.total_frames = config["total_frames"]
         self.total_rotations = config["total_rotations"]
+        self.min_rotations = config["min_rotations"]
         # Video length can be calculated from rps: len = total_rotations / rps
         # fps can be calculated with video length: fps = int(total_frames / video_length)
+        self.simulation_time = config["simulation_time"]
+        self.time_max_diff = config["time_max_diff"]
         self.ball_speed = config["ball_speed"]
         self.ball_start = config["ball_start"]
         self.ball_end = config["ball_end"]
@@ -103,14 +112,32 @@ class Simulator:
         """
 
         self.spin = spin
-        self.video_length = self.total_rotations / self.spin.get_angle()
-        self.fps = int(self.total_frames / self.video_length)
+        if self.fix_total_rotations:
+            self.video_length = self.total_rotations / self.spin.get_angle()
+            self.fps = int(self.total_frames / self.video_length)
+        else:
+            self.video_length = (self.simulation_time + int(np.random.uniform(-self.time_max_diff, self.time_max_diff))) / 1000000 # transform to seconds
+            if self.fix_total_frames:
+                self.fps = int(self.total_frames / self.video_length)
+            else:
+                self.total_frames = int(250 * self.spin.get_angle())  # this comes from 500 frames -> 2 rotations
+                if self.total_frames > self.max_total_frames:
+                    self.total_frames = self.max_total_frames
+
+                self.fps = int(self.total_frames / self.video_length)
+                self.total_rotations = self.spin.get_angle() * self.video_length
+                if self.total_rotations < self.min_rotations:
+                    self.logger.error(f"Total rotations {self.total_rotations} is less than the minimum {self.min_rotations}. Setting total rotations to {self.min_rotations}.")
+                    self.logger.error(f"Implement something here")
+
         if self.fix_to_1_s:
             self.video_length = 1.0
             self.fps = self.total_frames
             self.logger.debug(f"Fixing video length to 1s, setting fps to total_frames real length is: {self.total_rotations / self.spin.get_angle()}")
+
         self.logger.debug(f"Set spin: {self.spin.get_axis()} with angle: {self.spin.get_angle()} and omega: {self.spin.get_angle()}")
         self.logger.debug(f"Calculated video length: {self.video_length} seconds with fps: {self.fps} and total frames: {self.total_frames}")
+        self.logger.debug(f"Total rotations: {self.total_rotations} with spin: {self.spin.get_angle()} rps")
 
 
     def run_simulation(self):
@@ -308,6 +335,10 @@ class Simulator:
             "camera_rotation_world_x": [self.event_camera.cam.rotation_euler[0]],
             "camera_rotation_world_y": [self.event_camera.cam.rotation_euler[1]],
             "camera_rotation_world_z": [self.event_camera.cam.rotation_euler[2]],
+            "total_frames": [self.total_frames],
+            "total_rotations": [self.total_rotations],
+            "video_length": [self.video_length],
+            "fps": [self.fps],
         }
         metadata_df = pd.DataFrame(metadata)
         metadata_path = self.output_name + "metadata.csv"
@@ -393,6 +424,10 @@ class Simulator:
                     ev.increase_ev(pk)
             end_ts = time.time()
 
+            if self.stop_early and frame == 50:
+                self.logger.error(f"Stopping early at frame {frame} due to stop_early flag.")
+                break
+
         self.restore_output()
 
         if self.generate_video:
@@ -420,3 +455,56 @@ class Simulator:
             self.logger.debug(f"Blender scene saved to {self.output_name}scene.blend")
 
         self.save_ground_truth()
+
+
+if __name__ == "__main__":
+    config = {
+    'generate_video': True, 
+    'generate_hdf5': True, 
+    'generate_event_video': True, 
+    'save_blender': False, 
+    'random_orientation': False, 
+    'stop_early': False,
+    'fix_to_1_s': False,
+    'fix_total_rotations': False,
+    'fix_total_frames': False,
+    'max_total_frames': 500,
+    'total_frames': 500, 
+    'total_rotations': 2, 
+    'min_rotations': 1,
+    'simulation_time': 150000, # in us 1 000 000 us = 1 s = 1 000 milliseconds
+    'time_max_diff': 50000,
+    'ball_speed': 20.0, 
+    'ball_start': [0.0, 0.6, 0.0], 
+    'ball_end': [0.0, -0.6, 0.0], 
+    'video_fps': 30, 
+    'simulation_samples': 64, 
+    'ball_name': 'Sphere', 
+    'resolution_x': 1280, 
+    'resolution_y': 720, 
+    'resolution_percentage': 100, 
+    'focal_length': 9.0, 
+    'pixel_pitch': 0.0075, 
+    'th_pos': 0.15, 
+    'th_neg': 0.15, 
+    'th_n': 0.05, 
+    'lat': 500, 
+    'tau': 70, 
+    'jit': 100, 
+    'bgn': 0.0001, 
+    'ref_period': 50
+    }
+
+    import logger
+    path = "../data/datasets/topspin_fit_to_max/"
+    simulation_df = pd.read_csv("../data/datasets/topspin/simulation.csv")
+    basic_logger = logger.Logger(path+"tmp/")
+    data = simulation_df.iloc[10]
+    spin = rotations.Rotation()
+    spin.set_axis(data["rotation_x"], data["rotation_y"], data["rotation_z"])
+
+    initial_orientation = rotations.Rotation()
+    initial_orientation.set_axis(data["initial_rot_x"], data["initial_rot_y"], data["initial_rot_z"])
+
+    sim = Simulator(config, "/home/lkolmar/dev/Master_Thesis/data/datasets/topspin_fit_to_max/", spin, initial_orientation, basic_logger)
+    sim.run_simulation()

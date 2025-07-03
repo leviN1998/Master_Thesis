@@ -46,6 +46,11 @@ https://github.com/ashleve/lightning-hydra-template
 ## FireNet (Scheerlinck)
 * Used for video reconstruction
 * Inputs are temporal bins. Each event cotributes its polarity to the two closest temporal bins.
+* More precise:
+    Inputs are splitted into frames (sames as a video would be)
+    Those frames are the inputs for different recurrent steps
+    Every input is divided into n (5 i think) time bins to form the voxel grid
+    This is the channel dimension of the network input
 * Architecture with GRU cells
 
 

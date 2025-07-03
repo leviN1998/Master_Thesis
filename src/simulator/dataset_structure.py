@@ -120,7 +120,7 @@ def create_rotations(n:int, max_speed:float=80, min_speed:float=5) -> np.ndarray
             min_speed (float): Minimum speed that are roation can have. Unit is rps
 
         Returns:
-            rotations (np.ndarray): Numpy array containint all rotations
+            rotations (np.ndarray): Numpy array containing all rotations
     """
 
     lin = np.linspace(-1, 1, n)
