@@ -14,6 +14,8 @@ import h5py
 import hdf5plugin
 import cv2
 import numpy as np
+import rootutils
+rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 # import the IECBS simulator
 from src.utils.IEBCS.event_buffer import EventBuffer
 
@@ -163,6 +165,35 @@ def load_hdf5(filename: str) -> EventBuffer:
     return buf
 
 
+def load_hdf5_metavision(filename: str) -> EventBuffer:
+    """ Load the event buffer from an hdf5 file created by metavision studio
+        The file structure is different, therefore we need this function
+        file
+           |- CD
+           |   |- events
+           |       |- x
+           |       |- y
+           |       |- p
+           |       |- t
+           |- Indexes
+
+        Args:
+            filename: name of the file to load from
+        Returns:
+            EventBuffer with the loaded events
+    """
+    buf = EventBuffer(0)
+    with h5py.File(filename, 'r') as f:
+        events = f['CD']["events"]
+        buf.x = events['x'][:]
+        buf.y = events['y'][:]
+        buf.p = events['p'][:]
+        buf.ts = events['t'][:]
+        buf.i = buf.ts.shape[0]
+
+    return buf
+
+
 
 def print_event_info(event_buffer: EventBuffer):
     """ Print information about the event buffer
@@ -222,6 +253,7 @@ def create_video(events: EventBuffer, save_filename: str, resolution=(1280, 720)
 
 
 if __name__ == "__main__":
-    ev = load_hdf5("/data/lklomar/datasets/topspin/data/00034/00034_events.hdf5")
+    # ev = load_hdf5("/data/lkolmar/datasets/topspin/data/00034/00034_events.hdf5")
+    ev = load_hdf5("data/simulator/output/max/max-recording-snippet.hdf5")
     print_event_info(ev)
-    create_video(ev, "data/simulator/output/max/simulation_compare.avi", resolution=(1280, 720), fps=30.0, tw=100)
+    create_video(ev, "data/simulator/output/max/max-recording-faster.avi", resolution=(1280, 720), fps=30.0, tw=100)

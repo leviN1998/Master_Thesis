@@ -56,3 +56,4 @@ Resources:
     pip install -r requirements.txt
     pip install wandb
     pip install tonic
+    pip install metavision
