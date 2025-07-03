@@ -9,16 +9,18 @@
 import numpy as np
 import yaml
 import pandas as pd
-import simulator
 import sys
-sys.path.append("../../utils/")
+sys.path.append("src/utils/")
+sys.path.append("src/simulator/")
+sys.path.append("src/utils/IEBCS/")
+import simulator
 import rotations
 import logger
 import time
 import os
 
 
-path = "/data/lkolmar/datasets/topspin/"
+path = "/data/lkolmar/datasets/topspin_fit_to_max/"
 
 
 if __name__ == "__main__":
