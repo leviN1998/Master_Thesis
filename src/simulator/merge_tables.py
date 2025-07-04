@@ -1,13 +1,14 @@
 import pandas as pd
 
 
-path = "/data/lkolmar/datasets/topspin/"
-num_threads = 2
+path = "/data/lkolmar/datasets/topspin_fit_to_max/"
+num_threads = 6
+index_offset = 0 # does the first thread start at 0 or 1?
 
 if __name__ == "__main__":
     dfs = []
     for i in range(num_threads):
-        df = pd.read_csv(path + f"config/simulation_pid{i+1}.csv")
+        df = pd.read_csv(path + f"config/simulation_pid{i+index_offset}.csv")
         dfs.append(df)
 
     print(f"Loaded {len(dfs)} dataframes with {len(dfs[0])} entries each.")
@@ -25,4 +26,4 @@ if __name__ == "__main__":
         if not merged_df.iloc[i]["finished"]:
             print(f"Warning: Simulation {i} is not finished in any thread")
 
-    merged_df.to_csv("../data/topspin//simulation.csv", index=False)
+    merged_df.to_csv(path + "config/simulation.csv", index=False)

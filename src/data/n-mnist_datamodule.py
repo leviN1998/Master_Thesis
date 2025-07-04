@@ -39,6 +39,7 @@ class N_MNISTDataModule(LightningDataModule):
         self.save_hyperparameters(logger=False)
 
         # TODO: Check out different transformations
+        # Preprocessing and event representations can be done here
         # taken from https://tonic.readthedocs.io/en/latest/getting_started/nmnist.html
         sensor_size = tonic.datasets.NMNIST.sensor_size
         self.transforms = transforms.Compose([
