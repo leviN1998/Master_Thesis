@@ -5,9 +5,7 @@
     Inspired by https://github.com/TimoStoff/event_utils
 """
 
-import eventIO
 import numpy as np
-from IEBCS.event_buffer import EventBuffer
 import cv2
 
 
@@ -82,14 +80,30 @@ def events_to_voxel(xs, ys, ts, ps, num_bins: int = 10, sensor_size: tuple[int, 
     assert len(xs) == len(ys) == len(ts) == len(ps), "All event arrays must have the same length."
 
     # Create the voxel grid
-    voxel_grid = np.zeros((num_bins, sensor_size[1], sensor_size[0]))
+    voxel_grid = np.zeros((num_bins, sensor_size[1], sensor_size[0]),dtype=np.float32)
     t0 = ts.min()
     t1 = ts.max()
     bin_size = (t1 - t0) / num_bins
-    for x, y, t, p in zip(xs, ys, ts, ps):
-        bin_index = int((t - t0) / bin_size)
-        if 0 <= bin_index < num_bins:
-            voxel_grid[bin_index, y, x] += 1  # Increment the voxel count (No polarity consideration here)
+    img_size = (sensor_size[0]+1, sensor_size[1]+1)
+    
+    for b in range(num_bins):
+        # Get the events in the current bin
+        mask = (ts >= t0 + b * bin_size) & (ts < t0 + (b + 1) * bin_size)
+        xs_bin = xs[mask]
+        ys_bin = ys[mask]
+        ps_bin = ps[mask]
+
+        coords = np.stack((ys_bin, xs_bin))
+        try:
+            abs_coords = np.ravel_multi_index(coords, img_size)
+        except ValueError:
+            print("Issue with input arrays! minx={}, maxx={}, miny={}, maxy={}, coords.shape={}, \
+                    sum(coords)={}, sensor_size={}".format(np.min(xs), np.max(xs), np.min(ys), np.max(ys),
+                    coords.shape, np.sum(coords), img_size))
+            raise ValueError
+        v = np.bincount(abs_coords, minlength=img_size[0] * img_size[1])
+        v = v.reshape(img_size)
+        voxel_grid[b] = v[0:sensor_size[0], 0:sensor_size[1]]
 
     return voxel_grid
 

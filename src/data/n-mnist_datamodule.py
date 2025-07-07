@@ -9,6 +9,8 @@ from torchvision.transforms import transforms
 import tonic
 import numpy as np
 
+from src.utils import eventIO, event_represenations
+
 
 class N_MNISTDataModule(LightningDataModule):
     """ LightningDataModule for the N-MNIST dataset.
@@ -46,10 +48,7 @@ class N_MNISTDataModule(LightningDataModule):
         sensor_size = tonic.datasets.NMNIST.sensor_size
         # For different tansforms, check out preprocessing notebook
         self.transforms = transforms.Compose([
-                # tonic.transforms.Denoise(filter_time=10000),
-                tonic.transforms.ToFrame(sensor_size=sensor_size, n_time_bins=3),
-                lambda x: np.diff(x, axis=1),
-                lambda x: np.array(x[0], dtype=np.float32)  # flatten the first frame
+                # nothing here atm
         ])
 
         self.data_train: Optional[Dataset] = None
@@ -74,8 +73,18 @@ class N_MNISTDataModule(LightningDataModule):
 
         Do not use it to assign state (self.x = y).
         """
+
+        # -> Do preprocessing here
+        # Because of the way tonic works, it is probably best to do preprocessing as transforms
+        # Shape of the result must be [1, 34, 34]
+        # This is very slow
+        self.transforms = transforms.Compose([
+            lambda ev: event_represenations.events_to_voxel(ev["x"], ev["y"], ev["t"], ev["p"], num_bins=10, sensor_size=tonic.datasets.NMNIST.sensor_size),  # create voxel grid from events
+            lambda x: x[0][np.newaxis, ...]  # add channel dimension
+        ])
         tonic.datasets.NMNIST(self.hparams.data_dir, train=True, transform=self.transforms)
         tonic.datasets.NMNIST(self.hparams.data_dir, train=False, transform=self.transforms)
+
 
 
     def setup(self, stage: Optional[str] = None) -> None:
