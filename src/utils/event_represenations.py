@@ -24,14 +24,15 @@ def events_to_image(xs, ys, ts, ps, sensor_size: tuple[int, int] = (1280, 720)) 
     """
     assert len(xs) == len(ys) == len(ts) == len(ps), "All event arrays must have the same length."
     # Create an empty image
-    image = np.zeros(sensor_size, dtype=np.float32)
+    image = np.zeros((sensor_size[1], sensor_size[0]), dtype=np.float32)
     max_p = ps.max()
     min_p = ps.min()
     # Normalize polarities to the range [0, 255]
     ps_normalized = ((ps - min_p) / (max_p - min_p) * 255).astype(np.uint8)
     # Map events to the image
     for x, y, p in zip(xs, ys, ps_normalized):
-        image[y, x] += p
+        # image[y, x] += p
+        image[y, x] += 1
     return image
 
 
