@@ -84,3 +84,4 @@ https://github.com/ashleve/lightning-hydra-template
 
 ## Timo Stoff
 * Some very useful event stuff (data-augmentation, representation etc.)
+* https://github.com/TimoStoff/event_utils/tree/master

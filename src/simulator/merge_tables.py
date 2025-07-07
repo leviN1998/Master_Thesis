@@ -2,8 +2,8 @@ import pandas as pd
 
 
 path = "/data/lkolmar/datasets/topspin_fit_to_max/"
-num_threads = 6
-index_offset = 0 # does the first thread start at 0 or 1?
+num_threads = 4
+index_offset = 6 # does the first thread start at 0 or 1?
 
 if __name__ == "__main__":
     dfs = []

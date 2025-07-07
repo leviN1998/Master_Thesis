@@ -42,6 +42,7 @@ class SimpleDenseNet(nn.Module):
         :param x: The input tensor.
         :return: A tensor of predictions.
         """
+        # print(f"Input shape: {x.size()}")
         batch_size, channels, width, height = x.size()
 
         # (batch, 1, width, height) -> (batch, 1*width*height)

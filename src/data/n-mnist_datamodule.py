@@ -7,6 +7,7 @@ from torch.utils.data import ConcatDataset, DataLoader, Dataset, random_split
 from torchvision.datasets import MNIST
 from torchvision.transforms import transforms
 import tonic
+import numpy as np
 
 
 class N_MNISTDataModule(LightningDataModule):
@@ -43,9 +44,12 @@ class N_MNISTDataModule(LightningDataModule):
         # Preprocessing and event representations can be done here
         # taken from https://tonic.readthedocs.io/en/latest/getting_started/nmnist.html
         sensor_size = tonic.datasets.NMNIST.sensor_size
+        # For different tansforms, check out preprocessing notebook
         self.transforms = transforms.Compose([
                 # tonic.transforms.Denoise(filter_time=10000),
-                tonic.transforms.ToFrame(sensor_size=sensor_size, n_time_bins=3)
+                tonic.transforms.ToFrame(sensor_size=sensor_size, n_time_bins=3),
+                lambda x: np.diff(x, axis=1),
+                lambda x: np.array(x[0], dtype=np.float32)  # flatten the first frame
         ])
 
         self.data_train: Optional[Dataset] = None
@@ -70,8 +74,8 @@ class N_MNISTDataModule(LightningDataModule):
 
         Do not use it to assign state (self.x = y).
         """
-        tonic.datasets.NMNIST(self.hparams.data_dir, train=True)
-        tonic.datasets.NMNIST(self.hparams.data_dir, train=False)
+        tonic.datasets.NMNIST(self.hparams.data_dir, train=True, transform=self.transforms)
+        tonic.datasets.NMNIST(self.hparams.data_dir, train=False, transform=self.transforms)
 
 
     def setup(self, stage: Optional[str] = None) -> None:
