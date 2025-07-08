@@ -20,7 +20,7 @@ import time
 import os
 
 
-path = "/data/lkolmar/datasets/topspin_fit_to_max/"
+path = "/data/lkolmar/datasets/full_dataset/"
 
 
 if __name__ == "__main__":

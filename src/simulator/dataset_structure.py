@@ -69,9 +69,10 @@ import numpy as np
 import pandas as pd
 import shutil
 
+sys.path.append("src/utils/")
 import rotations
 
-example_path = "../data/example_dataset/"
+example_path = "data/datasets/example_dataset/"
 
 def make_folder_structure(path:str) -> None:
     """ Creates the folder structure for the dataset
@@ -232,8 +233,46 @@ def create_topspin_table():
     file_path = path + "config/" + "simulation.csv"
     df.to_csv(file_path, index=False)
 
+
+def create_full_table():
+    """ Creates table and structure for the full dataset
+
+        This function creates a table that contains all rotations and initial orientations for the full dataset.
+        The table is saved as a CSV file in the config folder of the dataset.
+    """
+    path = "/data/lkolmar/datasets/full_dataset/"
+    try:
+        os.mkdir(path)
+    except FileExistsError:
+        print("Dataset folder already exists. Please remove it or choose a different path.")
+        sys.exit()
+
+    make_folder_structure(path)
+    n = 30  # number of points per axis # 30 000 samples with n=40
+    samples = create_rotations(n, max_speed=80, min_speed=5)
+    print(f"Created {samples.shape[0]} samples")
+    initial_orientations = create_initial_orientation_topspin(samples.shape[0], 180, -180) # 180 deg is the full range (this is a hack to reuse the function)
+    print(f"Created {initial_orientations.shape[0]} initial orientations")
+    df = pd.DataFrame({
+        'index': np.arange(len(samples)),
+        'rotation_x': samples[:, 0],
+        'rotation_y': samples[:, 1],
+        'rotation_z': samples[:, 2],
+        'initial_rot_x': initial_orientations[:, 0],
+        'initial_rot_y': initial_orientations[:, 1],
+        'initial_rot_z': initial_orientations[:, 2],
+        'finished': False,
+        'path': "not set"
+    })
+
+    file_path = path + "config/" + "simulation.csv"
+    df.to_csv(file_path, index=False)
+
+
 if __name__ == "__main__":
-    create_topspin_table()
+    # create_topspin_table()
+    create_full_table()
+
 
 
 # --------------------------------------------------------------------------------------------------
