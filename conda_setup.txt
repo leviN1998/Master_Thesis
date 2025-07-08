@@ -59,3 +59,18 @@ Resources:
     pip install wandb
     pip install tonic
     pip install metavision
+
+
+# Dependencies for tt_balldetection (Thomas)
+
+1. Install ros2
+    https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html
+
+2. Install Spinnaker camera driver
+    https://docs.ros.org/en/iron/p/spinnaker_camera_driver/
+    conda install -c conda-forge empy
+    conda install -c conda-forge lark-parser
+    https://www.teledynevisionsolutions.com/de-de/support/support-center/software-firmware-downloads/iis/spinnaker-sdk-download/spinnaker-sdk--download-files/#anchor10
+    https://docs.ros.org/en/foxy/Tutorials/Beginner-Client-Libraries/Colcon-Tutorial.html
+
+3. Install other dependencies
