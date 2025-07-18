@@ -74,27 +74,23 @@ class FireNet(nn.Module):
         for t in range(sequence_length):
             x_t = x[t]
             x_t = self.conv(x_t)
-            x_t = self.relu(x_t)
+            x_t = torch.relu(x_t)
 
-            # stacked = torch.cat([x_t, state], dim=1)
-            # update = self.conv_test_a(stacked)
-            # update = torch.sigmoid(update)
-            # reset = self.conv_test_b(stacked)
-            # reset = torch.sigmoid(reset)
-            # state_tilde = self.conv_test_c(torch.cat([x_t, state * reset], dim=1))
-            # state_tilde = torch.tanh(state_tilde)
-            # state = state * (1 - update) + state_tilde * update
-
+            residual = x_t
             x_t = self.convgru1(x_t, self.state1)
             self.state1 = x_t
 
-            # x_t = torch.relu(x_t)
+            x_t += residual
+            x_t = torch.relu(x_t)
             x_t = self.res1(x_t)
 
-            # state2 = self.convgru2.forward(x_t, state2)
-            # x_t = torch.relu(state2)
-            # 
-            # x_t = self.res2(x_t)
+            residual = x_t
+            x_t = self.convgru2(x_t, self.state2)
+            self.state2 = x_t
+
+            x_t += residual
+            x_t = torch.relu(x_t)
+            x_t = self.res2(x_t)
 
 
         x_t = self.head(x_t)
