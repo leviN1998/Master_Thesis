@@ -79,11 +79,13 @@ class N_MNISTDataModule(LightningDataModule):
         # Shape of the result must be [1, 34, 34]
         # This is very slow
         self.transforms = transforms.Compose([
-            lambda ev: event_represenations.events_to_voxel(ev["x"], ev["y"], ev["t"], ev["p"], num_bins=10, sensor_size=tonic.datasets.NMNIST.sensor_size),  # create voxel grid from events
-            lambda x: x[0][np.newaxis, ...]  # add channel dimension
+            lambda ev: event_represenations.events_to_voxel(ev["x"], ev["y"], ev["t"], ev["p"], num_bins=20, sensor_size=tonic.datasets.NMNIST.sensor_size),  # create voxel grid from events
+            # lambda x: x[0][np.newaxis, ...]  # add channel dimension
+            lambda x: x.reshape(4, 5, 34, 34) # introduce sequence dimension for RNNs
         ])
-        tonic.datasets.NMNIST(self.hparams.data_dir, train=True, transform=self.transforms)
+        ds = tonic.datasets.NMNIST(self.hparams.data_dir, train=True, transform=self.transforms)
         tonic.datasets.NMNIST(self.hparams.data_dir, train=False, transform=self.transforms)
+        # print(f"Data prepared and transformed. Shape of transformed data: {ds[0][0].shape}")
 
 
 

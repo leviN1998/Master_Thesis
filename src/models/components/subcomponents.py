@@ -22,21 +22,26 @@ class ConvGRU(nn.Module):
         self.out_gate = nn.Conv2d(input_channels + hidden_channels, hidden_channels, kernel_size, padding=padding)
 
 
-    def forward(self, x: torch.Tensor, hidden: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
         """ Forward pass through the ConvGRU cell.
         
         """
-        batch_size, _, height, width = x.size()
-        if hidden is None:
-            hidden = torch.zeros(batch_size, self.hidden_channels, height, width, dtype=x.dtype, device=x.device)
+        # batch_size, channels, height, width = x.size()
 
-        combined = torch.cat([x, hidden], dim=1)  # Concatenate input and hidden state
-        z_t = torch.sigmoid(self.update_gate(combined))  # Update gate
-        r_t = torch.sigmoid(self.reset_gate(combined))  # Reset gate
-        h_tilde = torch.tanh(self.out_gate(torch.cat([x, r_t * hidden], dim=1)))
-        h_t = (1 - z_t) * hidden + z_t * h_tilde  # New hidden state
-        return h_t
-    
+        combined = torch.cat([x, state], dim=1)  # Concatenate input and hidden state
+
+        update = self.update_gate(combined)
+        update = torch.sigmoid(update)
+
+        reset = self.reset_gate(combined)
+        reset = torch.sigmoid(reset)
+
+        state_tilde = self.out_gate(torch.cat([x, state * reset], dim=1))
+        state_tilde = torch.tanh(state_tilde)
+        new_state = state * (1 - update) + state_tilde * update
+
+        return new_state
+
 
 
 class ResidualBlock(nn.Module):
@@ -68,6 +73,7 @@ class ResidualBlock(nn.Module):
 
         self.conv1 = nn.Conv2d(input_channels, input_channels, kernel_size, padding=padding)
         self.conv2 = nn.Conv2d(input_channels, input_channels, kernel_size, padding=padding)
+        self.relu = nn.ReLU()
 
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -77,9 +83,41 @@ class ResidualBlock(nn.Module):
         residual = x  # Save the input for the residual connection
         
         out = self.conv1(x)  
-        out = torch.relu(out)  
+        out = self.relu(out)  
         out = self.conv2(out)  
 
         out += residual  
-        out = torch.relu(out)  
+        out = self.relu(out)  
         return out 
+    
+
+class ClassificationHead(nn.Module):
+    """ Head for the NMNIST dataset classification.
+    """
+
+    def __init__(self, input_channels: int, input_shape: list, num_classes: int):
+        """ Initialize the classification head.
+        
+        :param input_channels: Number of input channels.
+        :param input_shape: Shape of the input tensor (height, width).
+        :param num_classes: Number of output classes.
+        """
+        super().__init__()
+        self.conv = nn.Conv2d(input_channels, out_channels=1, kernel_size=1)
+        self.shape = input_shape
+        self.num_classes = num_classes
+        self.fc = nn.Linear(1 * input_shape[0] * input_shape[1], num_classes)
+
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """ Forward pass through the classification head.
+        
+        :param x: Input tensor of shape (batch_size, input_channels, height, width).
+        :return: Output tensor of shape (batch_size, num_classes).
+        """
+        x = self.conv(x)
+        x = x.view(x.size(0), -1)  # Flatten the tensor
+        x = torch.relu(x)
+        x = self.fc(x)
+
+        return x
