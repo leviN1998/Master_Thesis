@@ -1,7 +1,7 @@
 ---
 author: Levin Kolmar
 title: "Learning-based spin estimation of table tennis ball with an event camera"
-subtitle: "Progress report week 8"
+subtitle: "Progress report week 9"
 institute: "Cognitive Systems, University of Tübingen"
 documentclass: scrartcl
 papersize: a4
@@ -9,15 +9,20 @@ papersize: a4
 
 # Summary
 
-* Started Recording of dataset including sidespin
+* Not that much, had an exam today
+* Implemented FireNet and trained succesfully on n-mnist
 * Some code fixes on the simulator
-* Continued working on the learning pipeline (almost ready to do first experiment)
-* Got the image collecting part from Thomas to work. Need to run SpinDOE now
+* Image collecting and SpinDOE now fully working
+* Labeled and preprocessed own dataset
 
 
 # Open questions
-* Nothing for now
+* When using Firenet i needed to have residual connections around every GRU cell to be able to learn when including full noise timesteps. Is is okay or do i need to bugfix somewhere?
 
 # Next steps
 
-* Do first learning run withFirenet on Topspin dataset (almost there)
+* Finish DataLoader class for own dataset
+* Train Firenet on Top-/Backpsin dataset
+* Train Firenet on Full-spin dataset
+* Collect real data to check if model works on that as well
+* Move to regression instead of classification
