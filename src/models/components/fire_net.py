@@ -41,15 +41,42 @@ class FireNet(nn.Module):
         if self.head is None:
             self.head = ClassificationHead(hidden_channels, (34, 34), num_classes=10)
 
-        self.test = nn.Sequential(nn.Conv2d(hidden_channels, hidden_channels, kernel_size, padding=padding),
-                                  nn.ReLU())
-        self.conv_test_a = nn.Conv2d(hidden_channels+hidden_channels, hidden_channels, kernel_size, padding=padding)
-        self.conv_test_b = nn.Conv2d(hidden_channels+hidden_channels, hidden_channels, kernel_size, padding=padding)
-        self.conv_test_c = nn.Conv2d(hidden_channels+hidden_channels, hidden_channels, kernel_size, padding=padding)
-        self.relu = nn.ReLU()
 
         self.state1 = None
         self.state2 = None
+
+    
+    def forward_step(self, x: torch.Tensor, last=False) -> torch.Tensor:
+        """ Forward step for a single time step in the sequence.
+        
+            args:
+                x: Input tensor of shape (batch_size, input_channels, height, width).
+
+            returns:
+                torch.Tensor: Output tensor after processing through the model. Only if its the last timestep
+        """
+        x = self.conv(x)
+        x = torch.relu(x)
+
+        residual = x
+        x = self.convgru1(x, self.state1)
+        self.state1 = x
+
+        x += residual
+        x = torch.relu(x)
+        x = self.res1(x)
+
+        residual = x
+        x = self.convgru2(x, self.state2)
+        self.state2 = x
+
+        if last:
+            x += residual
+            x = torch.relu(x)
+            x = self.res2(x)
+
+            return self.head(x)
+
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """ Forward pass through the FireNet model.
@@ -71,27 +98,12 @@ class FireNet(nn.Module):
         self.state1 = torch.zeros(batch_size, self.hidden_channels, h, w, dtype=x.dtype, device=x.device)
         self.state2 = torch.zeros(batch_size, self.hidden_channels, h, w, dtype=x.dtype, device=x.device)
 
-        for t in range(sequence_length):
+        for t in range(sequence_length-1):
             x_t = x[t]
-            x_t = self.conv(x_t)
-            x_t = torch.relu(x_t)
-
-            residual = x_t
-            x_t = self.convgru1(x_t, self.state1)
-            self.state1 = x_t
-
-            x_t += residual
-            x_t = torch.relu(x_t)
-            x_t = self.res1(x_t)
-
-            residual = x_t
-            x_t = self.convgru2(x_t, self.state2)
-            self.state2 = x_t
-
-            x_t += residual
-            x_t = torch.relu(x_t)
-            x_t = self.res2(x_t)
-
-
-        x_t = self.head(x_t)
+            self.forward_step(x_t)
+        
+        t += 1 
+        x_t = x[t]
+        x_t = self.forward_step(x_t, last=True)
+        
         return x_t
