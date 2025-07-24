@@ -48,7 +48,8 @@ def get_voxel_grid_as_image(voxelgrid: np.ndarray) -> np.ndarray:
     images = []
     splitter = np.ones((voxelgrid.shape[1], 2))*np.max(voxelgrid)
     for time_bin in voxelgrid:
-        images.append(time_bin / np.max(time_bin))
+        # images.append(time_bin / np.max(time_bin))
+        images.append(time_bin)
         images.append(splitter)
     
     images.pop()
@@ -111,3 +112,37 @@ def events_to_voxel(xs, ys, ts, ps, num_bins: int = 10, sensor_size: tuple[int, 
 
 # TODO: think about neg/pos voxels
 # TODO: check if dataloading is fast enought -> TimoStoff has some torch dataloading stuff
+
+
+def create_sequence(events, time_window=500, num_bins=10, sensor_size=(100, 100)):
+    """ Create a sequence of voxel grids from events.
+
+    This is usefull for preprocessing data such that e.g. FireNet can use it as input
+    
+    Args:
+        events (np.ndarray): The event data structured as a numpy array with fields ['x', 'y', 't', 'p'].
+        time_window (int): The time window in microseconds for each frame.
+        num_bins (int): The number of bins for the voxel grid.
+        sensor_size (tuple[int, int]): The size of the sensor (width, height).
+    
+    Returns:
+        np.ndarray: A sequence of voxel grids, where each voxel grid corresponds to a time window.
+        The shape of the output is [num_frames, num_bins, sensor_size[0], sensor_size[1]].
+    """
+    start_time = events['t'][0]
+    end_time = events['t'][-1]
+
+    # Vectorized version using numpy
+    t = events['t']
+    # Compute the bin index for each event
+    bin_indices = ((t - start_time) // time_window).astype(int)
+    num_frames = ((end_time - start_time) // time_window) + 1
+    sequences = np.zeros((num_frames, num_bins, sensor_size[0], sensor_size[1]), dtype=np.float32)
+
+    for i in range(num_frames):
+        mask = bin_indices == i
+        seq = events[mask]
+        if len(seq) > 0:
+            sequences[i] = events_to_voxel(seq['x'], seq['y'], seq['t'], seq['p'], num_bins=num_bins, sensor_size=sensor_size)
+
+    return sequences

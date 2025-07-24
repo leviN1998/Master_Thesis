@@ -46,13 +46,16 @@ class Hdf5Dataset(Dataset):
         """
         index = self.indices[idx] # simulation index (Note: not the same as idx, because splits are taken randomly)
         index_string = str(index).zfill(5)
-        events = eventIO.load_hdf5(self.dataset_path + f"data/{index_string}/{index_string}_events.hdf5")
+        events = eventIO.load_hdf5(self.dataset_path + f"preprocessed/{index_string}/{index_string}_roi.hdf5")
         array = np.empty_like(events.get_x(), dtype=events_struct)
         array["x"] = events.get_x()
         array["y"] = events.get_y()
         array["t"] = events.get_ts()
         array["p"] = events.get_p()
         # print(np.max(np.array([events.get_ts()])))
+
+        if self.transforms is not None:
+            array = self.transforms(array)
 
         label = self.labels.loc[self.labels['index'] == index, 'label'].values[0]
         return array, label
@@ -69,3 +72,8 @@ if __name__ == "__main__":
     dataset = Hdf5Dataset("/data/lkolmar/datasets/topspin_fit_to_max/", [0, 1, 2, 3, 4, 5])
     print(dataset[0])
     print(dataset[0][0].shape)
+
+    print(f"Max_x: {dataset[0][0]['x'].max()}, Min_x: {dataset[0][0]['x'].min()}")
+    print(f"Max_y: {dataset[0][0]['y'].max()}, Min_y: {dataset[0][0]['y'].min()}")
+    print(f"Max_t: {dataset[0][0]['t'].max()}, Min_t: {dataset[0][0]['t'].min()}")
+    print(f"Max_p: {dataset[0][0]['p'].max()}, Min_p: {dataset[0][0]['p'].min()}")
