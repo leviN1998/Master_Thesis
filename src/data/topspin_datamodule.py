@@ -12,8 +12,10 @@ if __name__ == "__main__":
     import sys
     sys.path.append("src/utils")
     sys.path.append("src/data/components/")
+    sys.path.append("src/models/components/")
     import eventIO, event_represenations
     from TOPSPIN import Hdf5Dataset
+    import fire_net
 else:
     from src.utils import eventIO, event_represenations
     from src.data.components.TOPSPIN import Hdf5Dataset
@@ -169,10 +171,11 @@ def pad_collate_fn(batch: list) -> Tuple[torch.Tensor, torch.Tensor]:
     events, labels = zip(*batch)
     # Stack events and labels
     events = [torch.tensor(ev, dtype=torch.float32) for ev in events]
+    lengths = [ev.shape[0] for ev in events]  # Get lengths of each sequence
     padded_sequences = torch.nn.utils.rnn.pad_sequence(sequences=events, batch_first=True, padding_value=0)
     labels_tensor = torch.tensor(labels)
     
-    return padded_sequences, labels_tensor
+    return padded_sequences, torch.tensor(lengths), labels_tensor
 
 
 if __name__ == "__main__":
@@ -189,8 +192,22 @@ if __name__ == "__main__":
     data_module.prepare_data()
     data_module.setup()
     batch = data_module.train_dataloader(). __iter__().__next__()
-    print(f"Batch size: {len(batch)}")
+    print(f"Batch size: {len(batch[0])}")
     print(f"Sample shape: {batch[0].shape}")  # Should be [time_bins, num_bins, sensor_size[0], sensor_size[1]]
-    print(f"Sample label: {batch[1]}")
+    print(f"Sample lengths: {batch[1]}")
+    print(f"Sample label: {batch[2]}")
     print(f"Number of classes: {data_module.num_classes}")
     print(f"Batch size per device: {data_module.batch_size_per_device}")
+    import matplotlib.pyplot as plt
+    img = event_represenations.get_voxel_grid_as_image(batch[0][0][0].cpu().detach().numpy())
+    plt.imshow(img, cmap='gray')
+    plt.title(f"Sample 0, label: {batch[2][0]}")
+    plt.show()
+
+    import subcomponents
+    firenet = fire_net.FireNet(input_channels=10, hidden_channels=16, kernel_size=3, head=subcomponents.ClassificationHead(16, (100, 100), num_classes=10))
+    print(firenet)
+    output = firenet(batch[0][:5], lengths=batch[1][:5])
+    print(f"Output shape: {output.shape}")  # Should be [batch_size, hidden_channels, height, width]
+    print(f"Output: {output}")
+    print(f"Output label: {batch[2][:5]}")
