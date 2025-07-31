@@ -136,6 +136,22 @@ class TopspinDataModule(LightningDataModule):
             shuffle=False,
             collate_fn=pad_collate_fn,  # Custom collate function to handle variable-length sequences
         )
+    
+
+    def test_dataloader(self) -> DataLoader[Any]:
+        """Create and return the test dataloader.
+
+        :return: The test dataloader.
+        """
+        return DataLoader(
+            dataset=self.data_test,
+            batch_size=self.batch_size_per_device,
+            num_workers=self.hparams.num_workers,
+            pin_memory=self.hparams.pin_memory,
+            shuffle=False,
+            collate_fn=pad_collate_fn,  # Custom collate function to handle variable-length sequences
+        )
+
 
     def teardown(self, stage: Optional[str] = None) -> None:
         """Lightning hook for cleaning up after `trainer.fit()`, `trainer.validate()`,
