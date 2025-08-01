@@ -180,6 +180,7 @@ class Simulator:
         self.event_camera = Blender_DvsSensor("Sensor")
         self.event_camera.cam = bpy.data.objects["Camera"]
         self.event_camera.set_sensor(nx=self.resolution_x, ny=self.resolution_y, pp=self.pixel_pitch)
+        # print(self.th_pos, self.th_neg, self.th_n, self.lat, self.tau, self.jit, self.bgn, self.ref_period)
         self.event_camera.set_dvs_sensor(th_pos=self.th_pos, th_neg=self.th_neg, th_n=self.th_n, lat=self.lat, tau=self.tau, jit=self.jit, bgn=self.bgn)
         self.event_camera.ref = self.ref_period
         self.event_camera.set_sensor_optics(self.focal_length)

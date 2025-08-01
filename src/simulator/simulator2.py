@@ -1,75 +1,80 @@
+import bpy
+import sys
 import numpy as np
-import matplotlib.pyplot as plt
+import bpy_extras
+import cv2
+sys.path.append("../utils")
+sys.path.append("../utils/IEBCS")
+sys.path.append("../src/utils/IEBCS") # debug
+sys.path.append("../src/utils")       # debug
+from dvs_sensor import *
+from dvs_sensor_blender import Blender_DvsSensor
+import eventIO
+import rotations
+from rotations import Rotation
 import yaml
+import os
+import time
+import pandas as pd
 
+class Simulator:
+    def __init__(self, config, dataset_path, logger, simulation_nr=0, pid=0):
+        self.logger = logger
+        self.set_config(config)
+        self.simulation_nr = simulation_nr
+        self.dataset_path = dataset_path
+        self.num_string = str(self.simulation_nr).zfill(5)
+        self.output_name = self.dataset_path + f"data/{self.num_string}/{self.num_string}_"
+        self.ball_coords = []
+        self.pid = pid
 
+        try:
+            os.mkdir(self.dataset_path + "data/" + self.num_string)
+        except FileExistsError:
+            self.logger.error(f"Directory {self.dataset_path}data/{self.num_string} already exists. Please remove it before running the simulation again.")
 
+    def set_config(self, config):
+        self.generate_video = config["generate_video"]
+        self.genrate_hdf5 = config["generate_hdf5"]
+        self.generate_event_video = config["generate_event_video"]
+        self.save_blender = config["save_blender"]
+        
+        self.ramdom_orientation = config["random_orientation"]
+        self.initial_orientation = config["initial_orientation"]
+        self.spin_axis = config["spin_axis"]
 
+        self.ball_start = config["ball_start"]
+        self.ball_end = config["ball_end"]
+        
+        self.frames = config["frames"]
+        self.simulation_time = config["simulation_time"]
+        self.video_fps = config["video_fps"]
+        self.simulation_samples = config["simulation_samples"]
+        self.ball_name = config["ball_name"]
 
-if __name__ == "__main__":
-    config_path = "configs/simulator/default.yaml"
-    with open(config_path, "r") as f:
-        config = yaml.safe_load(f)
+        self.resolution_x = config["resolution_x"]
+        self.resolution_y = config["resolution_y"]
+        self.resolution_percentage = config["resolution_percentage"]
+        self.focal_length = config["focal_length"]
+        self.pixel_pitch = config["pixel_pitch"]
+
+        self.th_pos = config["th_phos"]
+        self.th_neg = config["th_neg"]
+        self.th_n = config["th_n"]
+        self.lat = config["lat"]
+        self.tau = config["tau"]
+        self.jit = config["jit"]
+        self.bgn = config["bgn"]
+        self.ref_period = config["ref_period"]
+
     
+    def run_simmulation(self):
+        self.init_scene()
+        self.init_camera()
+        self.generate_keyframes()
+        self.simulate()
+        self.logger.info(f"Simulation {self.simulation_nr} finished. Output saved to {self.output_name}")
     
-    angle_rad = np.deg2rad(config["angle_deg"])
-    vy = config["ball_speed"] * np.cos(angle_rad) # links - rechts
-    vz = config["ball_speed"] * np.sin(angle_rad) # hoich runter
 
-    pos = np.array(config["ball_start"])
-    positions = [pos.copy()]
-    velocity = np.array([0.0, vy, vz])  # [vx, vy, vz]
-
-    fps = int(config["frames"] / (config["simulation_time"] / 1000000))
-    dt = 1000000.0 * (1.0 / fps)  # delta t in us (1000000 us = 1 s)
-
-    timesteps = config["frames"]
-    timesteps = 2000
-    dt = 0.002
-
-    # neue anpassungen
-    timesteps = 500
-    total_time = 150_000e-6  # 0.15s 
-    dt = total_time / timesteps  # dt in s
-
-    start_y = -0.6        # linker Bildrand
-    end_y = 0.6           # rechter Bildrand
-    start_z = 0.0         # Bildmitte als Start
-    end_z = -0.25         # unterer Rand (wenn wir wollen, dass er unten endet)
-
-    speed = config["ball_speed"]
-    speed = 0.2
-
-    v_y = (end_y - start_y) / total_time
-    ratio = np.tan(angle_rad) * (speed / 6.0)  # speed skaliert flacher/steiler
-    v_z = v_y * ratio
-
-    pos = np.array([0.0, start_y, start_z])
-    velocity = np.array([0.0, v_y, v_z])
-    positions = [pos.copy()]
-
-    for t in range(timesteps-1):
-        dt_s = dt
-        pos += velocity * dt_s  # update position
-        velocity[2] -= config["g"] * dt_s
-
-        positions.append(pos.copy())
-
-    positions = np.array(positions)
-
-    # Plot im neuen Koordinatensystem: y (links-rechts) vs z (hoch-runter)
-    plt.figure(figsize=(8, 4))
-    plt.plot(positions[:,1], positions[:,2], 'o-', markersize=4)
-
-    plt.title(f"Tischtennisball Flugkurve\nSpeed={config['ball_speed']} m/s, Winkel={config['angle_deg']}°")
-    plt.xlabel("y [m] (links → rechts)")
-    plt.ylabel("z [m] (hoch ↔ runter, 0 = Bildmitte)")
-    plt.grid(True)
-
-    plt.xlim(-0.6, 0.6)  # Bildbreite von -0.6 bis 0.6 m
-    plt.ylim(-0.25, 0.25)  # z in der Bildmitte ±0.3 m als Beispiel
-    plt.axhline(0, color='gray', linestyle='--', linewidth=1)  # Bildmitte
-
-    plt.show()
-
+    def init_scene(self):
         
