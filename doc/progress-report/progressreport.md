@@ -9,19 +9,24 @@ papersize: a4
 
 # Summary
 
-* Dataloading almost working (had a lot of bugs there)
-* First training runs with firenet on the simulated dataset but not working due to bugs in dataloading
+* Fixed dataloading problems
+* Trained Firenet on the dataset with top- and backspins. It had 6 classes: top or back and 3 idfferent speeds.  
+  Test accuracy was 0.94. \url{https://api.wandb.ai/links/levin-kolmar-master/u1nrmuoo}
+* I found out that the duration for loading a batch takes 2x as long as a forward pass. I could pre-compute the transformations (voxel-grid).
 
 
 # Open questions
-* Do we have a calibration library working to transform a spin measured by the frame-camera into the event camera?
-* Which event camera should i use for data collection?
-* David: do you have code to create the metavision-hdf5 format from the one we use?
+* Is 94% accuracy on the test set enough for 6 classes (Doesn't sound that good)
+* What is the best next step? Include data-augmentations, benchmark with real data, move on to regression, train on more difficult datasets with more spin-sttings (side-spin included). 
+* Should i try to include different ball-sizes and test how well that works?
+* De we have something to extract the ball ROI out of the event-data?
+
 
 # Next steps
 
-* Finish dataloading
-* Train Firenet on Top-/Backpsin dataset
-* Train Firenet on Full-spin dataset
-* Collect real data to check if model works on that as well
-* Move to regression instead of classification
+* Setup cameras and calibration for real data collection
+* Collect real data
+* Move on to regression
+* Move on to sidespin
+* Include usefull data-augmentations
+* Change Simulations to be more realistic and harder. Lighting, ball-size etc.
