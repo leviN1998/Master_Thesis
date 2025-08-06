@@ -6,6 +6,7 @@ from torch.utils.data import Dataset
 import sys
 sys.path.append("src/utils")
 import eventIO
+import time
 
 
 events_struct = np.dtype(
@@ -44,6 +45,7 @@ class Hdf5Dataset(Dataset):
         :param idx: Index of the sample to retrieve.
         :return: Transformed event data and its label. ([x,y,t,p], label)
         """
+        # start = time.time()
         index = self.indices[idx] # simulation index (Note: not the same as idx, because splits are taken randomly)
         index_string = str(index).zfill(5)
         events = eventIO.load_hdf5(self.dataset_path + f"preprocessed/{index_string}/{index_string}_roi.hdf5")
@@ -58,6 +60,8 @@ class Hdf5Dataset(Dataset):
             array = self.transforms(array)
 
         label = self.labels.loc[self.labels['index'] == index, 'label'].values[0]
+        # end = time.time()
+        # print(f"Time taken for __getitem__: {end - start:.4f} seconds")
         return array, label
     
 
