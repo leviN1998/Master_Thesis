@@ -4,6 +4,7 @@ import torch
 from lightning import LightningModule
 from torchmetrics import MaxMetric, MeanMetric
 from torchmetrics.classification.accuracy import Accuracy
+from torchmetrics.classification import ConfusionMatrix
 
 class TopspinLitModule(LightningModule):
     """Example of a `LightningModule` for the Topsin classification dataset.
@@ -62,9 +63,9 @@ class TopspinLitModule(LightningModule):
         self.criterion = torch.nn.CrossEntropyLoss()
 
         # metric objects for calculating and averaging accuracy across batches
-        self.train_acc = Accuracy(task="multiclass", num_classes=10)
-        self.val_acc = Accuracy(task="multiclass", num_classes=10)
-        self.test_acc = Accuracy(task="multiclass", num_classes=10)
+        self.train_acc = Accuracy(task="multiclass", num_classes=6)
+        self.val_acc = Accuracy(task="multiclass", num_classes=6)
+        self.test_acc = Accuracy(task="multiclass", num_classes=6)
 
         # for averaging loss across batches
         self.train_loss = MeanMetric()
@@ -73,6 +74,9 @@ class TopspinLitModule(LightningModule):
 
         # for tracking best so far validation accuracy
         self.val_acc_best = MaxMetric()
+
+        # For getting the multiclass confusion matrix
+        self.confusion_matrix = ConfusionMatrix(task="multiclass", num_classes=6)
 
     
     def forward(self, x: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
@@ -170,6 +174,30 @@ class TopspinLitModule(LightningModule):
         # update and log metrics
         self.test_loss(loss)
         self.test_acc(preds, targets)
+        self.confusion_matrix.update(preds, targets)  
+
+        # confusion matrix aufbereiten
+        cm = self.confusion_matrix.compute().cpu().numpy()
+        TP = cm.diagonal()
+        FP = cm.sum(axis=0) - TP
+        FN = cm.sum(axis=1) - TP
+        TN = cm.sum() - (TP + FP + FN)
+
+        num_classes = 6
+        for i in range(num_classes):
+            self.log(f"test/TP_class_{i}", TP[i], on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f"test/FP_class_{i}", FP[i], on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f"test/FN_class_{i}", FN[i], on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f"test/TN_class_{i}", TN[i], on_step=False, on_epoch=True, prog_bar=True)
+
+            precision = TP[i] / (TP[i] + FP[i] + 1e-8)
+            recall = TP[i] / (TP[i] + FN[i] + 1e-8)
+            f1 = 2 * precision * recall / (precision + recall + 1e-8)
+
+            self.log(f"test/precision_class_{i}", precision, on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f"test/recall_class_{i}", recall, on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f"test/f1_class_{i}", f1, on_step=False, on_epoch=True, prog_bar=True) 
+
         self.log("test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("test/acc", self.test_acc, on_step=False, on_epoch=True, prog_bar=True)
 
