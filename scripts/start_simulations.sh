@@ -36,6 +36,6 @@ for ((i=0; i<$1; i++)); do
 
     echo "Starting thread $i with idx $idx and count $sims_to_do"
     # python src/simulator/simulate.py $sims_to_do $idx $((i + $2)) > "/data/lkolmar/logs/simulation_thread_${i}.log" 2>&1 &
-    python src/simulator/simulate2.py $sims_to_do $idx $((i + $2)) > "/data/lkolmar/logs/simulation_thread_${i}.log" 2>&1 &
+    python src/simulator/simulate.py $sims_to_do $idx $((i + $2)) > "/data/lkolmar/logs/simulation_thread_${i}.log" 2>&1 &
 done
 wait

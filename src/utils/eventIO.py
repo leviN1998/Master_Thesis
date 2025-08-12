@@ -326,61 +326,10 @@ def create_video(events: EventBuffer, save_filename: str, resolution=(1280, 720)
 
 
 if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Event Buffer HDF5 Utility")
-    parser.add_argument("-m", "--metavision", type=str, help="Path to the Metavision HDF5 file")
-    parser.add_argument("-H", "--hdf5", type=str, help="Path to the HDF5 file")
-    parser.add_argument("-v", "--video", type=str, help="Path to save the video")
-    parser.add_argument("-s", "--save", type=str, help="Path to save the HDF5 file (Either metavision or hdf5 (The one that wasn loaded))")
-    parser.add_argument("-d", "--debug", type=bool, default=False, help="Enable debug mode")
-    # Add resolution and stuff if necessary
-
-    args = parser.parse_args()
-
-    if args.debug:
-        path_mv = "/data/lkolmar/max-recording.hdf5"
-        path_hdf5 = "/data/lkolmar/max-recording_converted_mv.hdf5"
-
-        with h5py.File(path_mv, 'r') as f:
-            print("Metavision file attributes:")
-            for key, value in f.items():
-                print(f"{key}: {value}")
-                for subkey, subvalue in f[key].items():
-                    print(f"  {subkey}: {subvalue}")
-                    # if subkey == "events" and key == "CD":
-                    #     print(subvalue["x"])
-                    #     print(subvalue.dtype)
-                    
-                    # print(f"  {subkey}: {subvalue.shape} {subvalue.dtype}")
-
-        print("\n" + "="*50 + "\n")
-
-        with h5py.File(path_hdf5, 'r') as f:
-            print("HDF5 file attributes:")
-            for key, value in f.items():
-                print(f"{key}: {value}")
-                for subkey, subvalue in f[key].items():
-                    print(f"  {subkey}: {subvalue}")
-
-        sys.exit(0)
-
-    if args.metavision:
-        buf = load_hdf5_metavision(args.metavision)
-        print_event_info(buf)
-        if args.video:
-            create_video(buf, args.video, tw=10000)
-        if args.save:
-            save_hdf5(buf, args.save, bias=[0, 0, 0, 0, 0, 0, 0, 0], resolution=(1280, 720))
-    elif args.hdf5:
-        buf = load_hdf5(args.hdf5)
-        print_event_info(buf)
-        if args.video:
-            create_video(buf, args.video)
-        if args.save:
-            save_hdf5_metavision(buf, args.save, bias=[0, 0, 0, 0, 0, 0, 0, 0], resolution=(1280, 720))
-    else:
-        print("Please provide a valid HDF5 or Metavision file path.")
-        sys.exit(1)
+    path = "/home/lkolmar/Documents/metavision/recordings/calibration_mv.hdf5"
     
+    output_path = "/home/lkolmar/Documents/metavision/recordings/calibration.hdf5"
 
+    buf = load_hdf5_metavision(path)
+    print_event_info(buf)
+    save_hdf5(buf, output_path, bias=[0, 15, 15, 0 ,0, 0])
