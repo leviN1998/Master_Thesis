@@ -1,86 +1,64 @@
-""" Simulate one sample
-
-    This class represents the simulator and is able to simulate one sample at a time.
-    It is used by the simulate.py script to manage and divide the simulation process.
-    The class is responsible for loading the scene, setting up the camera, and running the simulation.
-
-"""
-
 import bpy
-import sys
-import numpy as np
 import bpy_extras
 import cv2
-sys.path.append("../utils")
-sys.path.append("../utils/IEBCS")
+import time
+import os
+import sys
+import numpy as np
+import pandas as pd
+sys.path.append("src/utils")
+sys.path.append("src/utils/IEBCS")
 sys.path.append("../src/utils/IEBCS") # debug
 sys.path.append("../src/utils")       # debug
+import rotations
+import eventIO
 from dvs_sensor import *
 from dvs_sensor_blender import Blender_DvsSensor
-import eventIO
-import rotations
-from rotations import Rotation
-import yaml
-import os
-import time
-import pandas as pd
-
-
-def get_num_string(number: int):
-    """ Returns a string representation of the number with leading zeros (we now take 5 digits ~ 10 000)
-
-        Args:
-            number (int): The number to convert
-
-        Returns:
-            str: The string representation of the number with leading zeros
-    """
-    return str(number).zfill(5)
 
 
 class Simulator:
-    def __init__(self, config, dataset_path, spin:Rotation, initial_rot: Rotation, logger, simulation_nr=0, pid=0):
+
+    def __init__(self, config, logger, simulation_nr=0, pid=0):
         self.logger = logger
         self.set_config(config)
         self.simulation_nr = simulation_nr
-        self.dataset_path = dataset_path
-        self.set_spin(spin)
-        self.initial_rot = initial_rot
-        self.num_string = get_num_string(self.simulation_nr)
-        self.output_name = self.dataset_path + f"data/{self.num_string}/{self.num_string}_"
-        self.ball_coords = []
         self.pid = pid
+        self.num_string = str(simulation_nr).zfill(5)
+        self.tmp_path = self.dataset_path + f"tmp/pid_{self.pid}/image_tmp.png"
+        self.output_name = self.dataset_path + f"data/{self.num_string}/{self.num_string}_"
+        self.scene_path = self.dataset_path + f"config/scene.blend"
+        self.coords_path = self.output_name + "ball_coords.csv"
+        self.metadata_path = self.output_name + "metadata.csv"
+        self.gt_path = self.output_name + "ground_truth.csv"
+        self.ball_coords = []
+        self.calculate_fps()
 
         try:
             os.mkdir(self.dataset_path + "data/" + self.num_string)
         except FileExistsError:
             self.logger.error(f"Directory {self.dataset_path}data/{self.num_string} already exists. Please remove it before running the simulation again.")
 
-    
-    def set_config(self, config):
-        """ Set the configuration for the simulation """
-        
-        self.generate_video = config["generate_video"]
-        self.generate_hdf5 = config["generate_hdf5"]
-        self.generate_event_video = config["generate_event_video"]
-        self.save_blender = config["save_blender"]
-        self.random_orientation = config["random_orientation"]
-        self.stop_early = config["stop_early"]
-        self.fix_to_1_s = config["fix_to_1_s"]
-        self.fix_total_rotations = config["fix_total_rotations"]
-        self.fix_total_frames = config["fix_total_frames"]
 
-        self.max_total_frames = config["max_total_frames"]
-        self.total_frames = config["total_frames"]
+    def set_config(self, config):
+        self.generate_video = config["generate_video"]
+
+        self.dataset_path = config["dataset_path"]
+
+        o = config["initial_orientation"]
+        self.initial_orientation = rotations.Rotation()
+        self.initial_orientation.set_axis(o[0], o[1], o[2])
+        self.spin_axis = config["spin_axis"]
+        self.spin = rotations.Rotation()
+        self.spin.set_axis_np(np.array(self.spin_axis))
         self.total_rotations = config["total_rotations"]
-        self.min_rotations = config["min_rotations"]
-        # Video length can be calculated from rps: len = total_rotations / rps
-        # fps can be calculated with video length: fps = int(total_frames / video_length)
-        self.simulation_time = config["simulation_time"]
-        self.time_max_diff = config["time_max_diff"]
-        self.ball_speed = config["ball_speed"]
+
         self.ball_start = config["ball_start"]
         self.ball_end = config["ball_end"]
+        self.ball_scale_start = config["scale_start"]
+        self.ball_scale_end = config["scale_end"]
+
+        self.total_frames = config["total_frames"]
+        self.simulation_time = config["simulation_time"]
         self.video_fps = config["video_fps"]
         self.simulation_samples = config["simulation_samples"]
         self.ball_name = config["ball_name"]
@@ -101,62 +79,19 @@ class Simulator:
         self.ref_period = config["ref_period"]
 
 
-    def set_spin(self, spin:Rotation):
-        """ Set the spin of the ball for the simulation 
-        
-            If changed, some values need to be recalculated, such as the
-            fps, video length and the frame to set the end position to.
-
-            init_scene() and init_camera() need to be called again
-            to apply the changes to the scene and camera.
+    def calculate_fps(self):
         """
-
-        self.spin = spin
-        if self.fix_total_rotations:
-            self.video_length = self.total_rotations / self.spin.get_angle()
-            self.fps = int(self.total_frames / self.video_length)
-        else:
-            self.video_length = (self.simulation_time + int(np.random.uniform(-self.time_max_diff, self.time_max_diff))) / 1000000 # transform to seconds
-            if self.fix_total_frames:
-                self.fps = int(self.total_frames / self.video_length)
-            else:
-                self.total_frames = int(250 * self.spin.get_angle())  # this comes from 500 frames -> 2 rotations
-                if self.total_frames > self.max_total_frames:
-                    self.total_frames = self.max_total_frames
-
-                self.fps = int(self.total_frames / self.video_length)
-                self.total_rotations = self.spin.get_angle() * self.video_length
-                if self.total_rotations < self.min_rotations:
-                    self.logger.error(f"Total rotations {self.total_rotations} is less than the minimum {self.min_rotations}. Setting total rotations to {self.min_rotations}.")
-                    self.logger.error(f"Implement something here")
-
-        if self.fix_to_1_s:
-            self.video_length = 1.0
-            self.fps = self.total_frames
-            self.logger.debug(f"Fixing video length to 1s, setting fps to total_frames real length is: {self.total_rotations / self.spin.get_angle()}")
-
-        self.logger.debug(f"Set spin: {self.spin.get_axis()} with angle: {self.spin.get_angle()} and omega: {self.spin.get_angle()}")
-        self.logger.debug(f"Calculated video length: {self.video_length} seconds with fps: {self.fps} and total frames: {self.total_frames}")
-        self.logger.debug(f"Total rotations: {self.total_rotations} with spin: {self.spin.get_angle()} rps")
-
-
-    def run_simulation(self):
-        """ Run the simulation
-
-            This function initializes the scene, camera and generates the keyframes.
-            It then runs the simulation and saves the results to the specified output path.
+        Calculate the frames per second (fps) based on the simulation time and number of frames.
         """
-        self.init_scene()
-        self.init_camera()
-        self.generate_keyframes()
-        self.simulate()
-        self.logger.info(f"Simulation {self.simulation_nr} finished. Output saved to {self.output_name}")
+        self.video_length = self.simulation_time / 1000000.0  # convert microseconds to seconds
+        self.fps = int(self.total_frames / self.video_length)
 
 
     def init_scene(self):
-        """ Initialize the scene for the simulation """
-
-        bpy.ops.wm.open_mainfile(filepath=self.dataset_path + "config/scene.blend")
+        """
+        
+        """
+        bpy.ops.wm.open_mainfile(filepath=self.scene_path)
         self.ball = bpy.data.objects[self.ball_name]
         self.scene = bpy.context.scene
 
@@ -170,9 +105,8 @@ class Simulator:
         bg = bpy.data.worlds["World"].node_tree.nodes["Background"]
         bg.inputs[0].default_value = (0.1, 0.1, 0.1, 1)  # R, G, B, Alpha (black)
         bg.inputs[1].default_value = 0.0
-        
 
-        
+
     def init_camera(self):
         """ Set up ev camera """
         cam_pos = bpy.data.objects["Camera"].location
@@ -196,47 +130,26 @@ class Simulator:
         self.event_camera.init_bgn_hist(self.dataset_path + "noise/noise_pos_161lux.npy", self.dataset_path + "noise/noise_pos_161lux.npy")
 
 
-    def calculate_position_frame(self) -> int:
-        """ Calculate the frame to set the end position to
-
-            This is dependent on the speed of the ball and the fps
-            This function calculates the frame when the position of the ball
-            should be ball_end.
-
-            Falsch rum!! Der end-frame muss irgendwie max-frames sein...
-            nochmal anschauen, weil auch nur den halben Bildschrim zu durchqueren nicht so viel sinn macht.
+    def apply_initial_rotation(self):
         """
-        distance = np.linalg.norm(np.array(self.ball_end) - np.array(self.ball_start))
-        max_speed = distance / self.video_length
-        self.logger.debug(f"Max speed: {max_speed} for distance: {distance} and video length: {self.video_length}")
-        if self.ball_speed > max_speed:
-            self.logger.error(f"Ball speed is too high for the given video length. Please adjust the parameters. [{self.ball_speed} > {max_speed}]")
-            # sys.exit(1)
-
-        end_frame = int(self.total_frames * (self.ball_speed / max_speed))
-        self.logger.debug(f"Calculated end frame: {end_frame} for ball speed: {self.ball_speed} and max speed: {max_speed}")
-        return end_frame
-    
-    
-    def generate_keyframes(self):
-        """ Generate keyframes to simulate object
-    
-        For the rotation only the axis is needed because the simulation is fixed
-        to "total_rotations" rotations
-        
+        Apply initial rotation to the ball.
+        The initial rotation is defined in the config file.
         """
         self.ball.rotation_mode = 'AXIS_ANGLE'
-        if self.random_orientation:
-            self.initial_rot = rotations.random_rotation()
-
-        ax = self.initial_rot.get_axis()
-        angle = self.initial_rot.get_angle() # this is in degrees
+        ax = self.initial_orientation.get_axis()
+        angle = self.initial_orientation.get_angle()
         self.logger.debug(f"Initial rotation axis: {ax} with {angle} deg.")
         angle = angle * np.pi / 180.0 # convert to radians
         self.ball.rotation_axis_angle = (angle, ax[0], ax[1], ax[2])
         # apply initial rotation
         bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
 
+
+    def generate_spin_keyframes(self):
+        """
+        
+        """
+        self.ball.rotation_mode = 'AXIS_ANGLE'
         ax = self.spin.get_axis()
         self.ball.rotation_axis_angle = (0, ax[0], ax[1], ax[2])
         self.ball.keyframe_insert(data_path="rotation_axis_angle", frame=0, index=-1)
@@ -244,19 +157,28 @@ class Simulator:
         self.ball.rotation_axis_angle = (self.total_rotations * np.pi * 2, ax[0], ax[1], ax[2])
         self.ball.keyframe_insert(data_path="rotation_axis_angle", frame=self.total_frames, index=-1)
 
-        # TODO: fix for realistic speeds
+
+    def generate_scale_keyframes(self):
+        """ Generate keyframes for the ball scale
+        """
+        self.ball.scale = (self.ball_scale_start, self.ball_scale_start, self.ball_scale_start)
+        self.ball.keyframe_insert(data_path="scale", frame=0)
+
+        self.ball.scale = (self.ball_scale_end, self.ball_scale_end, self.ball_scale_end)
+        self.ball.keyframe_insert(data_path="scale", frame=self.total_frames)
+
+
+    def generate_position_keyframes(self):
         self.ball.location = self.ball_start
         self.ball.keyframe_insert(data_path="location", frame=0)
 
         self.ball.location = self.ball_end
         self.ball.keyframe_insert(data_path="location", frame=self.total_frames)
-        self.calculate_position_frame() # just to log the value
 
         # Set interpolation to linear for constant rotation speed
         for fcurve in self.ball.animation_data.action.fcurves:
             for kf in fcurve.keyframe_points:
                 kf.interpolation = 'LINEAR'
-
 
 
     def get_screen_positions(self):
@@ -283,7 +205,7 @@ class Simulator:
         pixel_y = (1 - center.y) * res_y
 
         return pixel_x, pixel_y
-    
+
 
     def update_ground_truth(self, frame):
         """ Update the ground truth file with the current frame's data
@@ -297,8 +219,6 @@ class Simulator:
     def save_ground_truth(self):
         """ Save the ground truth data to a file
         """
-        ground_truth_path = self.output_name + "ground_truth.yaml"
-        self.logger.debug(f"Saving ground truth data to {ground_truth_path}")
         # Save ground truth (rotation info) as CSV
         gt = {
             "rotation_x": [self.spin.get_axis()[0]],
@@ -307,9 +227,8 @@ class Simulator:
             "rotation_omega": [self.spin.get_angle()],
         }
         gt_df = pd.DataFrame(gt)
-        gt_path = self.output_name + "ground_truth.csv"
-        gt_df.to_csv(gt_path, index=False)
-        self.logger.debug(f"Ground truth data saved to {gt_path}")
+        gt_df.to_csv(self.gt_path, index=False)
+        self.logger.debug(f"Ground truth data saved to {self.gt_path}")
 
         # Save metadata as CSV
         metadata = {
@@ -323,10 +242,9 @@ class Simulator:
             "ball_end_x": [self.ball_end[0]],
             "ball_end_y": [self.ball_end[1]],
             "ball_end_z": [self.ball_end[2]],
-            "ball_speed": [self.ball_speed],
-            "initial_rot_x": [self.initial_rot.get_axis()[0]],
-            "initial_rot_y": [self.initial_rot.get_axis()[1]],
-            "initial_rot_z": [self.initial_rot.get_axis()[2]],
+            "initial_rot_x": [self.initial_orientation.get_axis()[0]],
+            "initial_rot_y": [self.initial_orientation.get_axis()[1]],
+            "initial_rot_z": [self.initial_orientation.get_axis()[2]],
             "ball_position_world_x": [self.ball.location[0]],
             "ball_position_world_y": [self.ball.location[1]],
             "ball_position_world_z": [self.ball.location[2]],
@@ -342,22 +260,20 @@ class Simulator:
             "fps": [self.fps],
         }
         metadata_df = pd.DataFrame(metadata)
-        metadata_path = self.output_name + "metadata.csv"
-        metadata_df.to_csv(metadata_path, index=False)
-        self.logger.debug(f"Metadata saved to {metadata_path}")
+        metadata_df.to_csv(self.metadata_path, index=False)
+        self.logger.debug(f"Metadata saved to {self.metadata_path}")
 
         # Save ball coordinates per frame as CSV
         coords_df = pd.DataFrame(self.ball_coords, columns=["frame", "screen_position"])
         # Split screen_position tuple into two columns
         coords_df[["screen_x", "screen_y"]] = pd.DataFrame(coords_df["screen_position"].tolist(), index=coords_df.index)
         coords_df = coords_df.drop(columns=["screen_position"])
-        coords_path = self.output_name + "ball_coords.csv"
-        coords_df.to_csv(coords_path, index=False)
-        self.logger.debug(f"Ball coordinates saved to {coords_path}")
+        coords_df.to_csv(self.coords_path, index=False)
+        self.logger.debug(f"Ball coordinates saved to {self.coords_path}")
 
-    
-    def redircet_output(self):
-        """ Rediret the blender output to a file
+
+    def redirect_output(self):
+        """ Redirect the blender output to a file
 
             This function redirects the blender output to a file, so that the logs can be saved
             and used for debugging purposes.
@@ -379,27 +295,20 @@ class Simulator:
 
 
     def simulate(self):
-        """ Run the simulation
-
-            This function runs the simulation and saves the results to the specified files.
-            It is responsible for setting up the scene, camera, and running the simulation.
         """
-        self.logger.info(f"Starting simulation {self.simulation_nr} with spin: {self.spin.get_angle()} rps")
-        self.logger.debug(f"Delta t calculated as: {1000000.0 * (1.0 / self.fps)} us with fps: {self.fps} ")
+        
+        """
 
         if self.generate_video:
-            self.logger.debug("Generating video is enabled!")
             fourcc = cv2.VideoWriter_fourcc("M", "J", "P", "G")
             video = cv2.VideoWriter(self.output_name + "frames.avi", fourcc, self.video_fps, (self.resolution_x, self.resolution_y))
 
-        if self.generate_hdf5:
-            self.logger.debug("Generating hdf5 is enabled!")
-            ev = EventBuffer(0)
+        ev = EventBuffer(0)
 
-        self.redircet_output()
+        self.redirect_output()
         start_ts = time.time()
         end_ts = time.time()
-        for frame in range(self.scene.frame_start, self.scene.frame_end + 1):
+        for frame in range(self.scene.frame_start, self.scene.frame_end+1):
             duration = end_ts - start_ts
             start_ts = time.time()
 
@@ -407,27 +316,23 @@ class Simulator:
                 self.logger.progress(f"Simulation {self.simulation_nr}: Rendering frame {frame}/{self.scene.frame_end}  ({duration:.2f} s/frame, {int(duration*self.total_frames)}s total.)")
             self.scene.frame_set(frame)
 
-            file_name = self.dataset_path + f"tmp/pid_{self.pid}/image_tmp.png"
-            self.scene.render.filepath = file_name
+            self.scene.render.filepath = self.tmp_path
             bpy.ops.render.render(write_still=True)
-            img = cv2.imread(file_name)
+            img = cv2.imread(self.tmp_path)
+
+            self.logger.debug(f"Ball Location: {self.ball.location}, Frame: {frame}, Image shape: {img.shape}")
 
             self.update_ground_truth(frame)
             if self.generate_video:
                 video.write(img)
 
-            if self.generate_hdf5:
-                if frame == 0:
-                    self.event_camera.init_image(img)
-                else:
-                    delta_t = 1000000.0 * (1.0 / self.fps)  # delta t in us (1000000 us = 1 s)
-                    pk = self.event_camera.update(img, delta_t)
-                    ev.increase_ev(pk)
+            if frame == 0:
+                self.event_camera.init_image(img)
+            else:
+                delta_t = 1000000.0 * (1.0 / self.fps)  # delta t in us (1000000 us = 1 s)
+                pk = self.event_camera.update(img, delta_t)
+                ev.increase_ev(pk)
             end_ts = time.time()
-
-            if self.stop_early and frame == 50:
-                self.logger.error(f"Stopping early at frame {frame} due to stop_early flag.")
-                break
 
         self.restore_output()
 
@@ -435,77 +340,37 @@ class Simulator:
             video.release()
             self.logger.debug(f"Video saved to {self.output_name}frames.avi")
 
-        if self.generate_hdf5:
-            if self.fix_to_1_s:
-                self.video_length = self.total_rotations / self.spin.get_angle()
-                self.logger.debug(f"Recalculating timestamps to fit video length of {self.video_length} seconds")
-                self.logger.debug(f"Result length is: {ev.get_ts()[-1] * self.video_length - ev.get_ts()[0] * self.video_length} us")
-                for i in range(ev.i):
-                    ev.ts[i] = int(ev.ts[i] * self.video_length)
-
-            bias = [self.th_pos, self.th_neg, self.th_n, self.lat, self.tau, self.jit, self.bgn, self.ref_period]
-            eventIO.save_hdf5(ev, self.output_name + "events.hdf5", bias)
-            self.logger.debug(f"Events saved to {self.output_name}events.hdf5")
-
-        if self.generate_event_video:
-            eventIO.create_video(ev, self.output_name + "events.avi", (self.resolution_x, self.resolution_y), self.video_fps, tw=200)
-            self.logger.debug(f"Event video saved to {self.output_name}events.avi")
-
-        if self.save_blender:
-            bpy.ops.wm.save_as_mainfile(filepath=self.output_name + "scene.blend")
-            self.logger.debug(f"Blender scene saved to {self.output_name}scene.blend")
+        bias = [self.th_pos, self.th_neg, self.th_n, self.lat, self.tau, self.jit, self.bgn, self.ref_period]
+        eventIO.save_hdf5(ev, self.output_name + "events.hdf5", bias)
 
         self.save_ground_truth()
 
 
+    def run_simulation(self):
+        """
+        Run the simulation.
+        """
+        self.init_scene()
+        self.init_camera()
+        self.apply_initial_rotation()
+        self.generate_spin_keyframes()
+        self.generate_scale_keyframes()
+        self.generate_position_keyframes()
+        self.simulate()
+        self.logger.info(f"Simulation {self.simulation_nr} finished. Output saved to {self.output_name}")
+
+
 if __name__ == "__main__":
-    config = {
-    'generate_video': True, 
-    'generate_hdf5': True, 
-    'generate_event_video': True, 
-    'save_blender': False, 
-    'random_orientation': False, 
-    'stop_early': False,
-    'fix_to_1_s': False,
-    'fix_total_rotations': False,
-    'fix_total_frames': False,
-    'max_total_frames': 500,
-    'total_frames': 500, 
-    'total_rotations': 2, 
-    'min_rotations': 1,
-    'simulation_time': 150000, # in us 1 000 000 us = 1 s = 1 000 milliseconds
-    'time_max_diff': 50000,
-    'ball_speed': 20.0, 
-    'ball_start': [0.0, 0.6, 0.0], 
-    'ball_end': [0.0, -0.6, 0.0], 
-    'video_fps': 30, 
-    'simulation_samples': 64, 
-    'ball_name': 'Sphere', 
-    'resolution_x': 1280, 
-    'resolution_y': 720, 
-    'resolution_percentage': 100, 
-    'focal_length': 9.0, 
-    'pixel_pitch': 0.0075, 
-    'th_pos': 0.15, 
-    'th_neg': 0.15, 
-    'th_n': 0.05, 
-    'lat': 500, 
-    'tau': 70, 
-    'jit': 100, 
-    'bgn': 0.0001, 
-    'ref_period': 50
-    }
+    print("test simulator module")
 
+    import yaml
     import logger
-    path = "../data/datasets/topspin_fit_to_max/"
-    simulation_df = pd.read_csv("../data/datasets/topspin/simulation.csv")
-    basic_logger = logger.Logger(path+"tmp/")
-    data = simulation_df.iloc[10]
-    spin = rotations.Rotation()
-    spin.set_axis(data["rotation_x"], data["rotation_y"], data["rotation_z"])
 
-    initial_orientation = rotations.Rotation()
-    initial_orientation.set_axis(data["initial_rot_x"], data["initial_rot_y"], data["initial_rot_z"])
+    with open("configs/simulator/default.yaml", "r") as f:
+        config = yaml.safe_load(f)
 
-    sim = Simulator(config, "/home/lkolmar/dev/Master_Thesis/data/datasets/topspin_fit_to_max/", spin, initial_orientation, basic_logger)
+    logger = logger.Logger(path="/data/lkolmar/datasets/test/tmp/")
+
+    sim = Simulator(config, logger, simulation_nr=0, pid=0)
     sim.run_simulation()
+    print("Simulation finished.")
