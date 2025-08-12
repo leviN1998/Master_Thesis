@@ -9,7 +9,7 @@ from torchvision.transforms import transforms
 import tonic
 import numpy as np
 
-from src.utils import eventIO, event_represenations
+from src.utils import event_representations, eventIO
 
 
 class N_MNISTDataModule(LightningDataModule):
@@ -79,7 +79,7 @@ class N_MNISTDataModule(LightningDataModule):
         # Shape of the result must be [1, 34, 34]
         # This is very slow
         self.transforms = transforms.Compose([
-            lambda ev: event_represenations.events_to_voxel(ev["x"], ev["y"], ev["t"], ev["p"], num_bins=20, sensor_size=tonic.datasets.NMNIST.sensor_size),  # create voxel grid from events
+            lambda ev: event_representations.events_to_voxel(ev["x"], ev["y"], ev["t"], ev["p"], num_bins=20, sensor_size=tonic.datasets.NMNIST.sensor_size),  # create voxel grid from events
             # lambda x: x[0][np.newaxis, ...]  # add channel dimension
             lambda x: x.reshape(4, 5, 34, 34) # introduce sequence dimension for RNNs
         ])

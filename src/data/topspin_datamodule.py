@@ -8,6 +8,8 @@ from torchvision.transforms import transforms
 import tonic
 import numpy as np
 
+from src.utils import event_representations
+
 if __name__ == "__main__":
     import sys
     sys.path.append("src/utils")
@@ -17,7 +19,7 @@ if __name__ == "__main__":
     from TOPSPIN import Hdf5Dataset
     import fire_net
 else:
-    from src.utils import eventIO, event_represenations
+    from src.utils import eventIO
     from src.data.components.TOPSPIN import Hdf5Dataset
 
 
@@ -53,7 +55,7 @@ class TopspinDataModule(LightningDataModule):
 
         self.transforms = transforms.Compose([
             # Add any necessary transformations here
-            lambda ev: event_represenations.create_sequence(ev, 
+            lambda ev: event_representations.create_sequence(ev, 
                                                             self.hparams.time_window, self.hparams.num_bins, 
                                                             self.hparams.sensor_size),  # create sequences from events
         ])
@@ -106,6 +108,8 @@ class TopspinDataModule(LightningDataModule):
                 lengths=self.hparams.train_val_test_split,
                 generator=torch.Generator().manual_seed(self.hparams.seed),
             )
+            print(self.data_test.indices)
+
 
 
     def train_dataloader(self) -> DataLoader[Any]:
@@ -215,7 +219,7 @@ if __name__ == "__main__":
     print(f"Number of classes: {data_module.num_classes}")
     print(f"Batch size per device: {data_module.batch_size_per_device}")
     import matplotlib.pyplot as plt
-    img = event_represenations.get_voxel_grid_as_image(batch[0][0][0].cpu().detach().numpy())
+    img = event_representations.get_voxel_grid_as_image(batch[0][0][0].cpu().detach().numpy())
     plt.imshow(img, cmap='gray')
     plt.title(f"Sample 0, label: {batch[2][0]}")
     plt.show()

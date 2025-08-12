@@ -185,18 +185,18 @@ class TopspinLitModule(LightningModule):
 
         num_classes = 6
         for i in range(num_classes):
-            self.log(f"confusion/TP_class_{i}", TP[i], on_step=False, on_epoch=True, prog_bar=True)
-            self.log(f"confusion/FP_class_{i}", FP[i], on_step=False, on_epoch=True, prog_bar=True)
-            self.log(f"confusion/FN_class_{i}", FN[i], on_step=False, on_epoch=True, prog_bar=True)
-            self.log(f"confusion/TN_class_{i}", TN[i], on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f"confusion/TP_class_{i}", TP[i], on_step=False, on_epoch=True, prog_bar=False)
+            self.log(f"confusion/FP_class_{i}", FP[i], on_step=False, on_epoch=True, prog_bar=False)
+            self.log(f"confusion/FN_class_{i}", FN[i], on_step=False, on_epoch=True, prog_bar=False)
+            self.log(f"confusion/TN_class_{i}", TN[i], on_step=False, on_epoch=True, prog_bar=False)
 
             precision = TP[i] / (TP[i] + FP[i] + 1e-8)
             recall = TP[i] / (TP[i] + FN[i] + 1e-8)
             f1 = 2 * precision * recall / (precision + recall + 1e-8)
 
-            self.log(f"confusion/precision_class_{i}", precision, on_step=False, on_epoch=True, prog_bar=True)
-            self.log(f"confusion/recall_class_{i}", recall, on_step=False, on_epoch=True, prog_bar=True)
-            self.log(f"confusion/f1_class_{i}", f1, on_step=False, on_epoch=True, prog_bar=True)
+            self.log(f"confusion/precision_class_{i}", precision, on_step=False, on_epoch=True, prog_bar=False)
+            self.log(f"confusion/recall_class_{i}", recall, on_step=False, on_epoch=True, prog_bar=False)
+            self.log(f"confusion/f1_class_{i}", f1, on_step=False, on_epoch=True, prog_bar=False)
 
         self.log("test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("test/acc", self.test_acc, on_step=False, on_epoch=True, prog_bar=True)
