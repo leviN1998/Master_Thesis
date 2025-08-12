@@ -1,3 +1,9 @@
+""" Simulator instance, for simulating a ball-trajectory
+
+    This file runs a simulation with a given config (see in configs/simulator/default.yaml)
+    The simulation is set up in a way that every parameter is set by the config file.
+    Ball positions, spin, rps, video length etc. need to be set in the config file, or be overwrittenwhen launching a simulaiton
+"""
 import bpy
 import bpy_extras
 import cv2
@@ -17,8 +23,20 @@ from dvs_sensor_blender import Blender_DvsSensor
 
 
 class Simulator:
+    """ Simulator instance
+
+        This class is used to run a simulation with a given config file.
+    """
 
     def __init__(self, config, logger, simulation_nr=0, pid=0):
+        """ Initialize the simulator instance
+
+            Args:
+                config (dict): Configuration dictionary with simulation parameters
+                logger (Logger): Logger instance for logging messages
+                simulation_nr (int): Simulation number for naming output files
+                pid (int): Process ID for logging purposes
+        """
         self.logger = logger
         self.set_config(config)
         self.simulation_nr = simulation_nr
@@ -40,6 +58,8 @@ class Simulator:
 
 
     def set_config(self, config):
+        """ Set the configuration for the simulation
+        """
         self.generate_video = config["generate_video"]
 
         self.dataset_path = config["dataset_path"]
@@ -80,16 +100,14 @@ class Simulator:
 
 
     def calculate_fps(self):
-        """
-        Calculate the frames per second (fps) based on the simulation time and number of frames.
+        """ Calculate the frames per second (fps) based on the simulation time and number of frames.
         """
         self.video_length = self.simulation_time / 1000000.0  # convert microseconds to seconds
         self.fps = int(self.total_frames / self.video_length)
 
 
     def init_scene(self):
-        """
-        
+        """ Initialize the Blender scene for the simulation.
         """
         bpy.ops.wm.open_mainfile(filepath=self.scene_path)
         self.ball = bpy.data.objects[self.ball_name]
@@ -146,8 +164,7 @@ class Simulator:
 
 
     def generate_spin_keyframes(self):
-        """
-        
+        """ Generate keyframes for the ball spin
         """
         self.ball.rotation_mode = 'AXIS_ANGLE'
         ax = self.spin.get_axis()
@@ -169,6 +186,10 @@ class Simulator:
 
 
     def generate_position_keyframes(self):
+        """ Generate keyframes for the ball position
+
+            The ball is moved from the start position to the end position over the total frames.
+        """
         self.ball.location = self.ball_start
         self.ball.keyframe_insert(data_path="location", frame=0)
 
@@ -295,8 +316,9 @@ class Simulator:
 
 
     def simulate(self):
-        """
-        
+        """ Runs the blender simulation part
+
+            Setup needs to be done for this to work
         """
 
         if self.generate_video:
@@ -347,8 +369,9 @@ class Simulator:
 
 
     def run_simulation(self):
-        """
-        Run the simulation.
+        """ Run the simulation.
+        
+            Execute all setup steps, the run the simualtion
         """
         self.init_scene()
         self.init_camera()
