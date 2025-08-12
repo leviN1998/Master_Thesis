@@ -4,6 +4,9 @@ Resources:
     https://developer.blender.org/docs/handbook/building_blender/linux/
     https://developer.blender.org/docs/handbook/building_blender/python_module/
 
+    For metavision:
+        export HDF5_PLUGIN_PATH=$HDF5_PLUGIN_PATH:/usr/lib/x86_64-linux-gnu/hdf5/serial/plugins
+
 
 1. Create conda env
     conda create -n "simulator" python=3.11
