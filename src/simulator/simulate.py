@@ -20,7 +20,7 @@ import time
 import os
 
 
-path = "/data/lkolmar/datasets/full_dataset/"
+path = "/data/lkolmar/datasets/emre_dataset2/"
 
 
 if __name__ == "__main__":
@@ -47,24 +47,38 @@ if __name__ == "__main__":
         print(f"Temporary directory for pid {pid} already exists, using it.")
     basic_logger = logger.Logger(path=path + "tmp/pid_" + str(pid) + "/")
     basic_logger.info(f"Running {n} simulations with offset {offset}")
+
     for i in range(n):
         start_ts = time.time()
         index = i + offset
         basic_logger.info(f"Running simulation {i + 1} of {n} with index {index}")
         data = simulation_df.iloc[index]
-        # create simulator instance
-        initial_orientation = rotations.Rotation()
-        initial_orientation.set_axis(data["initial_rot_x"], data["initial_rot_y"], data["initial_rot_z"])
-        spin = rotations.Rotation()
-        spin.set_axis(data["rotation_x"], data["rotation_y"], data["rotation_z"])
+
+        # load data
+        initital_orientation = [data["initial_rot_x"], data["initial_rot_y"], data["initial_rot_z"]]
+        spin = [data["rotation_x"], data["rotation_y"], data["rotation_z"]]
+        ball_start = [data["ball_start_x"], data["ball_start_y"], data["ball_start_z"]]
+        ball_end = [data["ball_end_x"], data["ball_end_y"], data["ball_end_z"]]
+        scale_start = data["scale_start"]
+        scale_end = data["scale_end"]
+
+        # put into config
+        config["spin_axis"] = spin
+        config["initial_orientation"] = initital_orientation
+        config["ball_start"] = ball_start
+        config["ball_end"] = ball_end
+        config["scale_start"] = scale_start
+        config["scale_end"] = scale_end
+
         if data["finished"] == True:
             basic_logger.info(f"Simulation {index} already finished, skipping.")
             continue
 
-        sim = simulator.Simulator(config, path, spin, initial_orientation, basic_logger, simulation_nr=index, pid=pid)
+        # create simulator instance
+        sim = simulator.Simulator(config, logger=basic_logger, simulation_nr=index, pid=pid)
         sim.run_simulation()
         simulation_df.loc[index, "finished"] = True
-        simulation_df.loc[index, "path"] = f"data/{simulator.get_num_string(index)}/{simulator.get_num_string(index)}_"
+        simulation_df.loc[index, "path"] = f"data/{str(index).zfill(5)}/{str(index).zfill(5)}_"
         simulation_df.to_csv(path + f"config/simulation_pid{pid}.csv", index=False)
         duration_s = time.time() - start_ts
         estimated_time = (n - i - 1) * duration_s

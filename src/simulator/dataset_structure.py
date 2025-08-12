@@ -88,7 +88,7 @@ def create_emre_table():
         'rotation_y': 0,
         'rotation_z': 0,
         'initial_rot_x': 0,
-        'initial_rot_y': 0,
+        'initial_rot_y': 180,
         'initial_rot_z': 0,
         'ball_start_x': samples[:, 0],
         'ball_start_y': samples[:, 1],
