@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-path = "/data/lkolmar/datasets/full_dataset/"
+path = "/data/lkolmar/datasets/emre_dataset2/"
 num_threads = 8
 index_offset = 0 # does the first thread start at 0 or 1?
 

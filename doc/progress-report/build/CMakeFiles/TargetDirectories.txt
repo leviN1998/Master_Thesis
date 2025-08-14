@@ -1,3 +1,0 @@
-/home/levin/dev/Master_Thesis/doc/progress-report/build/CMakeFiles/progressreport.dir
-/home/levin/dev/Master_Thesis/doc/progress-report/build/CMakeFiles/edit_cache.dir
-/home/levin/dev/Master_Thesis/doc/progress-report/build/CMakeFiles/rebuild_cache.dir
