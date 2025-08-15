@@ -58,7 +58,7 @@ def save_hdf5_old(event_buffer: EventBuffer, filename: str):
 
 def save_hdf5(event_buffer: EventBuffer, filename: str, bias, resolution=(1280, 720), chunk_size=10_000_000, 
                 compression=hdf5plugin.Blosc(cname="zstd", clevel=1, shuffle=hdf5plugin.Blosc.BITSHUFFLE),
-                clevel=1):
+                clevel=1, sensor="IECBS Simulator"):
     """ Save the event buffer as hdf5 file as specified by David
         Args:
             event_buffer: EventBuffer to save
@@ -68,7 +68,7 @@ def save_hdf5(event_buffer: EventBuffer, filename: str, bias, resolution=(1280, 
             compression: Compression algorithm settings.
             clevel (int): Compression level.
     """
-    sensor = "IECBS Simulator"
+    # sensor = "IECBS Simulator"
     width, height = resolution
     with h5py.File(filename, 'w') as f:
         event_group = f.create_group('events')
