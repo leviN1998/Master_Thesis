@@ -110,6 +110,7 @@ class TopspinDataModule(LightningDataModule):
             )
             print()
             print("------------------------------------------------------------------------")
+            print()
             print("Train indices:", self.data_train.indices)
             print("Val indices:", self.data_val.indices)
             print("Test indices:", self.data_test.indices)

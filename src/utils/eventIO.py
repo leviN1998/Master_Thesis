@@ -167,6 +167,8 @@ def load_hdf5(filename: str) -> EventBuffer:
         buf.p = data['p'][:]
         buf.ts = data['t'][:]
         buf.i = buf.ts.shape[0]
+        buf.ms_to_idx = f.get("ms_to_idx", np.array([], dtype=np.uint64))[:]
+
     return buf
 
 

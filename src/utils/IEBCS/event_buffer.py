@@ -12,6 +12,8 @@ class EventBuffer():
     p = 0  # Array of polarity values (0 negative, 1 positive)
     i = 0  # Position of the next event
 
+    ms_to_idx = 0
+
     def __init__(self, size):
         """ Resize the buffers
             Args:
@@ -31,6 +33,8 @@ class EventBuffer():
             self.y = np.zeros(size, dtype=np.uint16)
             self.p = np.zeros(size, dtype=np.uint8)
             self.ts = np.zeros(size, dtype=np.uint64)
+
+        self.ms_to_idx = np.array([], dtype=np.uint64)
 
     def get_x(self):
         return self.x[:self.i]
