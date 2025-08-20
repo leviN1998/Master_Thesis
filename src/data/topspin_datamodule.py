@@ -108,9 +108,14 @@ class TopspinDataModule(LightningDataModule):
                 lengths=self.hparams.train_val_test_split,
                 generator=torch.Generator().manual_seed(self.hparams.seed),
             )
-            print(self.data_test.indices)
-
-
+            print()
+            print("------------------------------------------------------------------------")
+            print("Train indices:", self.data_train.indices)
+            print("Val indices:", self.data_val.indices)
+            print("Test indices:", self.data_test.indices)
+            print()
+            print("------------------------------------------------------------------------")  
+            print() 
 
     def train_dataloader(self) -> DataLoader[Any]:
         """Create and return the train dataloader.

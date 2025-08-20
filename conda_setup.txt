@@ -62,6 +62,7 @@ Resources:
     pip install wandb
     pip install tonic
     pip install metavision
+    pip install seaborn
 
 
 # Dependencies for tt_balldetection (Thomas)
