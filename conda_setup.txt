@@ -63,6 +63,7 @@ Resources:
     pip install tonic
     pip install metavision
     pip install seaborn
+    pip install filterpy
 
 
 # Dependencies for tt_balldetection (Thomas)
