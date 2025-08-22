@@ -2,6 +2,13 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 import numpy as np
+import h5py
+import eventIO
+import event_representations
+
+from src.utils.IEBCS import event_buffer
+
+mv_dtype = {'names': ['x', 'y', 'p', 't'], 'formats': ['<u2', '<u2', '<i2', '<i8'], 'offsets': [0, 2, 4, 8], 'itemsize': 16}
 
 class VideoPlayer(tk.Tk):
     def __init__(self, frames, fps=30):
@@ -137,6 +144,41 @@ class VideoPlayer(tk.Tk):
         self._destroyed = True
         self.pause()
         self.destroy()
+
+
+def img_from_array(arr):
+    ev_it = eventIO.EventIterator(arr, tw_us=1000)
+    imgs = []
+    for evs in ev_it:
+        x, y, p, ts = evs
+        frame = event_representations.events_to_image(x, y, ts, p)
+        norm_frame = ((frame / 12) * 255).clip(0, 255).astype(np.uint8)
+        img = np.zeros((norm_frame.shape[0], norm_frame.shape[1], 3), dtype=np.uint8)
+        # Set background to dark blue
+        img[:, :, 2] = 40  # B
+        img[:, :, 1] = 0   # G
+        img[:, :, 0] = 0   # R
+        # Set event pixels to light blue
+        mask = norm_frame > 0
+        # print(norm_frame.shape, frame.shape, mask.shape, img.shape)
+        img[mask, 2] = 220  # B
+        img[mask, 1] = 180  # G
+        img[mask, 0] = 100  # R
+        imgs.append(img)
+        
+    return imgs
+
+
+def img_from_file(filepath):
+    with h5py.File(filepath, 'r') as f:
+        data = f['events']
+        x = data['x'][:]
+        y = data['y'][:]
+        p = data['p'][:]
+        ts = data['t'][:]
+        
+    data = np.array(list(zip(x, y, p, ts)), dtype=mv_dtype)
+    return img_from_array(data)
 
 
 # ---------- Demo ----------
