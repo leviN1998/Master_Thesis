@@ -39,6 +39,20 @@ events.h5
 
 '''
 
+mv_dtype = np.dtype({'names': ['x', 'y', 'p', 't'], 'formats': ['<u2', '<u2', '<i2', '<i8'], 'offsets': [0, 2, 4, 8], 'itemsize': 16})
+
+
+def buffer_to_array(event_buffer: EventBuffer) -> np.ndarray:
+    """ Convert the event buffer to a structured numpy array
+        Args:
+            event_buffer: EventBuffer to convert
+        Returns:
+            Structured numpy array containing the events
+    """
+    return np.array(list(zip(event_buffer.get_x(), event_buffer.get_y(),
+                               event_buffer.get_p(), event_buffer.get_ts())),
+                    dtype=mv_dtype)
+                
 
 def save_hdf5_old(event_buffer: EventBuffer, filename: str):
     """ Save the event buffer as hdf5 file
@@ -326,6 +340,35 @@ def create_video(events: EventBuffer, save_filename: str, resolution=(1280, 720)
         out.write(img_c)
     out.release()
 
+
+class EventIterator:
+    """
+    Iterates over an event-array by using custom time-windows
+    
+    """
+    def __init__(self, events: np.ndarray, tw_us: int = 1000):
+        self.events = events
+        self.tw_us = tw_us
+        self.t_min = events['t'].min()
+        self.t_max = events['t'].max()
+        self.current_time = self.t_min
+
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        if self.current_time > self.t_max:
+            raise StopIteration
+        # Get the next chunk of events
+        chunk_idxs = np.where((self.events['t'] >= self.current_time) & (self.events['t'] < self.current_time + self.tw_us))[0]
+        chunk = np.empty(0, dtype=mv_dtype)
+
+        if chunk_idxs.size > 0:
+            chunk = self.events[chunk_idxs]
+            
+        self.current_time += self.tw_us
+        return chunk
+    
 
 if __name__ == "__main__":
     path = "/home/lkolmar/Documents/metavision/recordings/calibration_mv.hdf5"

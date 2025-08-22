@@ -64,6 +64,7 @@ Resources:
     pip install metavision
     pip install seaborn
     pip install filterpy
+    pip install scikit-image
 
 
 # Dependencies for tt_balldetection (Thomas)
