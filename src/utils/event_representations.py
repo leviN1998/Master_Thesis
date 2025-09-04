@@ -146,3 +146,22 @@ def create_sequence(events, time_window=500, num_bins=10, sensor_size=(100, 100)
             sequences[i] = events_to_voxel(seq['x'], seq['y'], seq['t'], seq['p'], num_bins=num_bins, sensor_size=sensor_size)
 
     return sequences
+
+
+
+def ev_frame_to_img(f):
+    """ Function to create pretty images for video representation
+    """
+    norm_frame = ((f / 12) * 255).clip(0, 255).astype(np.uint8)
+    img = np.zeros((norm_frame.shape[0], norm_frame.shape[1], 3), dtype=np.uint8)
+    # Set background to dark blue
+    img[:, :, 2] = 40  # B
+    img[:, :, 1] = 0   # G
+    img[:, :, 0] = 0   # R
+    # Set event pixels to light blue
+    mask = norm_frame > 0
+    # print(norm_frame.shape, frame.shape, mask.shape, img.shape)
+    img[mask, 2] = 220  # B
+    img[mask, 1] = 180  # G
+    img[mask, 0] = 100  # R
+    return img

@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import filedialog, messagebox
+import os, glob
 from PIL import Image, ImageTk
 import numpy as np
 import h5py
@@ -13,6 +15,20 @@ mv_dtype = {'names': ['x', 'y', 'p', 't'], 'formats': ['<u2', '<u2', '<i2', '<i8
 class VideoPlayer(tk.Tk):
     def __init__(self, frames, fps=30):
         super().__init__()
+
+        # --- Menüleiste ---
+        menubar = tk.Menu(self)
+        filemenu = tk.Menu(menubar, tearoff=0)
+        filemenu.add_command(label="Öffnen…", accelerator="Strg+O", command=self.open_file)
+        filemenu.add_separator()
+        filemenu.add_command(label="Beenden", accelerator="Strg+Q", command=self._on_close)
+        menubar.add_cascade(label="Datei", menu=filemenu)
+        self.config(menu=menubar)
+
+        # Shortcuts
+        self.bind_all("<Control-o>", lambda e: self.open_file())
+        self.bind_all("<Control-q>", lambda e: self._on_close())
+
         self.title("NumPy Video Player")
         self.frames = [self._to_rgb_uint8(f) for f in frames]
         self.num_frames = len(self.frames)
@@ -145,6 +161,37 @@ class VideoPlayer(tk.Tk):
         self.pause()
         self.destroy()
 
+    def open_file(self):
+        path = filedialog.askopenfilename(
+            title="Datei öffnen",
+            filetypes=[
+                ("HDF5 Files", "*.hdf5 *.h5"),
+                ("NumPy Arrays", "*.npy *.npz"),
+                ("GIF Animation", "*.gif"),
+                ("Alle Dateien", "*.*"),
+            ]
+        )
+        if not path:
+            return
+        try:
+            buf = eventIO.load_hdf5(path)    
+            frames = eventIO.buffer_to_video(buf, tw_us=1000)
+            self._reset_with_frames(frames)
+        except Exception as e:
+            messagebox.showerror("Fehler beim Öffnen", str(e))
+
+    def _reset_with_frames(self, frames):
+        """Player sauber auf neue Frames umstellen."""
+        if not frames:
+            raise ValueError("Leere Frame-Liste.")
+        self.pause()
+        self.frames = [self._to_rgb_uint8(f) for f in frames]
+        self.num_frames = len(self.frames)
+        self.idx = 0
+        # Seek neu konfigurieren
+        self.seek.configure(to=self.num_frames - 1)
+        self._show_frame(0)
+        
 
 def img_from_array(arr):
     ev_it = eventIO.EventIterator(arr, tw_us=1000)
@@ -183,19 +230,12 @@ def img_from_file(filepath):
 
 # ---------- Demo ----------
 if __name__ == "__main__":
-    H, W = 240, 320
-    frames = []
-    for t in range(120):
-        img = np.zeros((H, W, 3), dtype=np.uint8)
-        r = 30
-        cx = int((W/2) + (W/3)*np.sin(2*np.pi*t/60))
-        cy = int((H/2) + (H/4)*np.cos(2*np.pi*t/45))
-        yy, xx = np.ogrid[:H, :W]
-        mask = (xx-cx)**2 + (yy-cy)**2 <= r*r
-        img[..., 1] = 40
-        img[mask] = (255, 120, 0)
-        img[10:20, (t*3) % W: ((t*3) % W)+60] = (0, 200, 255)
-        frames.append(img)
+    # buf = eventIO.load_hdf5("/home/lkolmar/Documents/metavision/recordings/dataset_full_ball-gun/cut/" + "spike_4_spin_0_rec1_converted.hdf5")
+    # print(f"Loaded {buf.i} events.")
+    # print(f"Buffer duration: {buf.get_ts().max() - buf.get_ts().min()} us, {(buf.get_ts().max() - buf.get_ts().min()) / 1e6:.2f} s")
+    # frames = eventIO.buffer_to_video(buf, tw_us=10000)
+    # print(f"Created {len(frames)} frames.")
+    frames = [np.zeros((720, 1280, 3), dtype=np.uint8)]
 
     app = VideoPlayer(frames, fps=30)
     app.mainloop()

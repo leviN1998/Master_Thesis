@@ -20,7 +20,9 @@ rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 # import the IECBS simulator
 # from src.utils.IEBCS.event_buffer import EventBuffer
 sys.path.append("src/utils/IEBCS")
+sys.path.append("src/utils")
 from event_buffer import EventBuffer
+import event_representations
 
 mv_dtype = {'names': ['x', 'y', 'p', 't'], 'formats': ['<u2', '<u2', '<i2', '<i8'], 'offsets': [0, 2, 4, 8], 'itemsize': 16}
 
@@ -52,7 +54,35 @@ def buffer_to_array(event_buffer: EventBuffer) -> np.ndarray:
     return np.array(list(zip(event_buffer.get_x(), event_buffer.get_y(),
                                event_buffer.get_p(), event_buffer.get_ts())),
                     dtype=mv_dtype)
-                
+
+
+def buffer_to_video(event_buffer: EventBuffer, tw_us: int, sensor_size: tuple[int, int] = (1280, 720)) -> list[np.ndarray]:
+    """ Convert the event buffer to a list of frames (numpy arrays)
+        Args:
+            event_buffer: EventBuffer to convert
+        Returns:
+            List of frames (numpy arrays)
+    """
+    frames = []
+    it = EventIterator(buffer_to_array(event_buffer), tw_us=tw_us)
+
+    empty = 0
+    frames_cnt = 0
+    for evs in it:
+        if len(evs) == 0:
+            img = np.zeros((event_buffer.get_y().max()+1, event_buffer.get_x().max()+1, 3), dtype=np.uint8)
+            empty += 1
+        
+        else:
+            ev_frame = event_representations.events_to_image(evs["x"], evs["y"], evs["t"], evs["p"], sensor_size=sensor_size)
+            img = event_representations.ev_frame_to_img(ev_frame)
+        
+        frames.append(img)
+        frames_cnt += 1
+        if frames_cnt % 100 == 0:
+            print(f"Converted {frames_cnt} frames, {empty} were empty")
+    return frames
+
 
 def save_hdf5_old(event_buffer: EventBuffer, filename: str):
     """ Save the event buffer as hdf5 file
