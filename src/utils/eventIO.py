@@ -79,8 +79,8 @@ def buffer_to_video(event_buffer: EventBuffer, tw_us: int, sensor_size: tuple[in
         
         frames.append(img)
         frames_cnt += 1
-        if frames_cnt % 100 == 0:
-            print(f"Converted {frames_cnt} frames, {empty} were empty")
+        # if frames_cnt % 100 == 0:
+        #     print(f"Converted {frames_cnt} frames, {empty} were empty")
     return frames
 
 
