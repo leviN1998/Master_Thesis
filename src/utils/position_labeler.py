@@ -201,5 +201,5 @@ if __name__ == "__main__":
         frames = eventIO.buffer_to_video(buf, tw_us=timeframe_us)
 
         positions = annotate_every_kth_and_interpolate(frames, step=10)
-        print(positions.shape, positions[:15])
+        print(positions.shape, positions[:5])
         np.save(f"/home/lkolmar/Documents/metavision/recordings/dataset_full_ball-gun/annotations/{cur_filename.replace('.hdf5', '')}.npy", positions)
