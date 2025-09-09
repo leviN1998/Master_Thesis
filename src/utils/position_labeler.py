@@ -142,9 +142,15 @@ def annotate_every_kth_and_interpolate(
             break
         elif key == 32:  # SPACE
             if state["sp"] > 0:
-                state["sp"] -= 1
-                state["await_second_click"] = has_point[sample_idxs[state["sp"]]]
-                state["redraw"] = True
+                if state["await_second_click"]:
+                    state["await_second_click"] = False
+                    state["redraw"] = True
+                    has_point[sample_idxs[state["sp"]]] = False
+                    positions[sample_idxs[state["sp"]]] = None
+                else:
+                    state["sp"] -= 1
+                    state["await_second_click"] = has_point[sample_idxs[state["sp"]]]
+                    state["redraw"] = True
         try:
             if cv2.getWindowProperty(window_name, cv2.WND_PROP_VISIBLE) < 1:
                 break
@@ -191,8 +197,15 @@ if __name__ == "__main__":
     # print(positions.shape, positions[:15])
     filepath = f"/home/lkolmar/Documents/metavision/recordings/dataset_full_ball-gun/cut/"
     filenames = [f for f in os.listdir(filepath) if os.path.isfile(os.path.join(filepath, f))]
-    
+
+    fp_finished = f"/home/lkolmar/Documents/metavision/recordings/dataset_full_ball-gun/annotations/"
+    finished = [f.replace(".npy", ".hdf5") for f in os.listdir(fp_finished) if os.path.isfile(os.path.join(fp_finished, f))]
+    print(f"Finished: {len(finished)} / {len(filenames)}")
+    filenames = [f for f in filenames if f not in finished]
+    print(f"To do: {len(filenames)}")
+
     for i in range(len(filenames)):
+        # break
         print(f"Sample {i+1}/{len(filenames)}")
         cur_filename = filenames[i]
         print(cur_filename)
