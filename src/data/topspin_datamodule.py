@@ -34,6 +34,7 @@ class TopspinDataModule(LightningDataModule):
         data_dir: str = "/data/lkolmar/datasets/topspin_fit_to_max/",
         time_window: int = 500,  # time window for event sequences
         num_bins: int = 10,  # number of bins for voxel grid
+        flip: bool = False,  # whether to flip the event data
         sensor_size: Tuple[int, int] = (100, 100),
         train_val_test_split: Tuple[int, int, int] = (1294, 277, 277),                # n = 1848 (70%, 15%, 15%)
         batch_size: int = 64,
@@ -57,7 +58,7 @@ class TopspinDataModule(LightningDataModule):
             # Add any necessary transformations here
             lambda ev: event_representations.create_sequence(ev, 
                                                             self.hparams.time_window, self.hparams.num_bins, 
-                                                            self.hparams.sensor_size),  # create sequences from events
+                                                            self.hparams.sensor_size, flip=self.hparams.flip),  # create sequences from events
         ])
         # one sample is now [time_bins, num_bins, sensor_size[0], sensor_size[1]]
 
@@ -108,6 +109,7 @@ class TopspinDataModule(LightningDataModule):
                 lengths=self.hparams.train_val_test_split,
                 generator=torch.Generator().manual_seed(self.hparams.seed),
             )
+            print(f"Flipped: {self.hparams.flip}")
             print()
             print("------------------------------------------------------------------------")
             print()

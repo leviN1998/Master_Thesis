@@ -114,7 +114,7 @@ def events_to_voxel(xs, ys, ts, ps, num_bins: int = 10, sensor_size: tuple[int, 
 # TODO: check if dataloading is fast enought -> TimoStoff has some torch dataloading stuff
 
 
-def create_sequence(events, time_window=500, num_bins=10, sensor_size=(100, 100)):
+def create_sequence(events, time_window=500, num_bins=10, sensor_size=(100, 100), flip=False) -> np.ndarray:
     """ Create a sequence of voxel grids from events.
 
     This is usefull for preprocessing data such that e.g. FireNet can use it as input
@@ -144,6 +144,8 @@ def create_sequence(events, time_window=500, num_bins=10, sensor_size=(100, 100)
         seq = events[mask]
         if len(seq) > 0:
             sequences[i] = events_to_voxel(seq['x'], seq['y'], seq['t'], seq['p'], num_bins=num_bins, sensor_size=sensor_size)
+            if flip:
+                sequences[i] = np.flip(sequences[i], axis=(1,2))
 
     return sequences
 
