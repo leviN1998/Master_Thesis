@@ -54,7 +54,7 @@ def get_voxel_grid_as_image(voxelgrid: np.ndarray) -> np.ndarray:
     
     images.pop()
     sidebyside = np.hstack(images)
-    sidebyside = cv2.normalize(sidebyside, None, 0, 255, cv2.NORM_MINMAX)
+    # sidebyside = cv2.normalize(sidebyside, None, 0, 255, cv2.NORM_MINMAX)
     return sidebyside
 
 
@@ -106,6 +106,7 @@ def events_to_voxel(xs, ys, ts, ps, num_bins: int = 10, sensor_size: tuple[int, 
         v = np.bincount(abs_coords, minlength=img_size[0] * img_size[1])
         v = v.reshape(img_size)
         voxel_grid[b] = v[0:sensor_size[0], 0:sensor_size[1]]
+        voxel_grid[b] = (voxel_grid[b] / voxel_grid[b].max() * 255).astype(np.float32) if voxel_grid[b].max() > 0 else voxel_grid[b]
 
     return voxel_grid
 
