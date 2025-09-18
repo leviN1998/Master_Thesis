@@ -1,7 +1,7 @@
 ---
 author: Levin Kolmar
 title: "Learning-based spin estimation of table tennis ball with an event camera"
-subtitle: "Progress report week 14"
+subtitle: "Progress report week 15"
 institute: "Cognitive Systems, University of Tübingen"
 documentclass: scrartcl
 papersize: a4
@@ -9,25 +9,25 @@ papersize: a4
 
 # Summary
 
-* SpinDOE dataset is now fully preprocessed and usable
-* The dataset contains 2 recordings for every (143) ball gun setting. For every setting, the ground truth is measured using SpinDOE. 
-Every trajectory was cut out of the event-recording and the ROI is extracted using hand-labeled positions.
-* Labeled SpinDOE dataset into 6 labels (top-/backspin) (slow, mid, fast). Real data has rps up to 135rps and simulation only 80rps.
-* tested model on real data. Very bad results see image.
+* Sim vs real event statistics (see discord)
+* Changed from spot light to area light and moved to the ceiling.
 
-![Confusion matrix \label{fig:conf}](../conf_matrix.png){ width=50% }
+![Light top \label{fig:conf}](../sim_vs_real_okay.png){ width=80% }
 
-![Real vs sim Data](../sim_vs_real.png){ width=75% }
+* tuned some simulation parameters. Sim / real = 0.87 (event ratio)
 
-* Main problem: sim data has trahectory from right to left and real the other way around. I will try to flip and train a new model until tomorrow
+![Parameters tuned \label{fig:conf}](../sim_vs_real_better.png){ width=80% }
+
 
 # Open questions
 
-* How could the data be improved? trajectory instead of straight line? faster/slower ball? different scale?
-* Look at examples of sim vs real together.
+* Do you think this setup is good enough?
+* What could we adjust to get more realistic simulations
+* What Which should we include into the next dataset?
 
 
 # Next steps
 
 * improve simualtion
+* simulate dataset
 * train new model
