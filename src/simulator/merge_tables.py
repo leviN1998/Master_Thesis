@@ -1,8 +1,9 @@
 import pandas as pd
 
 
-path = "/data/lkolmar/datasets/emre_dataset2/"
-num_threads = 8
+path = "/data/lkolmar/datasets/realistic/"
+
+num_threads = 9
 index_offset = 0 # does the first thread start at 0 or 1?
 
 if __name__ == "__main__":

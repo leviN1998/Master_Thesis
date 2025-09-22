@@ -3,6 +3,14 @@
 
     This script can be used on the common dataset structure of the simulator
     it builds the "preprocessed" folder from data in the "data" folder.
+
+
+    Coordinate Systems:
+    - Blender: x-axis points towards camera, y-axis points right, z-axis points up
+    - SpinDOE: x-axis points right, y-axis points up, z-axis points towards camera
+
+
+    ----> lat usage: preprocess subset
 """
 
 import os
@@ -14,7 +22,7 @@ import eventIO
 import tqdm
 
 
-dataset_path = "/data/lkolmar/datasets/topspin_fit_to_max/"
+dataset_path = "/data/lkolmar/datasets/realistic/"
 output_path = dataset_path + "preprocessed/"
 
 roi_size = 100  # size of the region of interest in pixels
