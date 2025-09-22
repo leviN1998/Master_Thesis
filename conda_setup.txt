@@ -65,6 +65,7 @@ Resources:
     pip install seaborn
     pip install filterpy
     pip install scikit-image
+    pip install roma
 
 
 # Dependencies for tt_balldetection (Thomas)
