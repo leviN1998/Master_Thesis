@@ -1,0 +1,42 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+
+defaults:
+  - override /data: subset.yaml
+  - override /model: firenet_topspin.yaml
+  - override /callbacks: default.yaml
+  - override /trainer: gpu.yaml
+  - override /logger: wandb.yaml
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+tags: ["topspin", "subset","firenet_net"]
+
+
+# seed: 1234567
+
+trainer:
+  min_epochs: 10
+  max_epochs: 50
+  gradient_clip_val: 0.5
+
+model:
+  optimizer:
+    lr: 0.0001
+  net:
+    input_channels: 10
+  compile: false
+
+data:
+  batch_size: 4
+  num_workers: 2
+
+logger:
+  wandb:
+    tags: ${tags}
+    group: "topspin"
+  aim:
+    experiment: "topspin"

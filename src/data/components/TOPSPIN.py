@@ -81,3 +81,9 @@ if __name__ == "__main__":
     print(f"Max_y: {dataset[0][0]['y'].max()}, Min_y: {dataset[0][0]['y'].min()}")
     print(f"Max_t: {dataset[0][0]['t'].max()}, Min_t: {dataset[0][0]['t'].min()}")
     print(f"Max_p: {dataset[0][0]['p'].max()}, Min_p: {dataset[0][0]['p'].min()}")
+
+    dataset = Hdf5Dataset("/data/lkolmar/datasets/subset/", np.arange(407))
+    print(dataset[0])
+    print(dataset[0][0].shape)
+    print(len(dataset))
+    print(dataset[-1][0].shape)

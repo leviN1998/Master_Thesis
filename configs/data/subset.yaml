@@ -1,0 +1,10 @@
+_target_: src.data.topspin_datamodule.TopspinDataModule
+data_dir: /data/lkolmar/datasets/subset/
+batch_size: 128  # Needs to be divisible by the number of devices
+train_val_test_split: [307, 50, 50]   # n = 407 (75%, 12.5%, 12.5%)
+num_workers: 7
+pin_memory: False
+time_window: 5000  # in us, used for creating sequences from events
+num_bins: 10  # number of bins for voxel grid representation
+sensor_size: [100, 100]  # size of the sensor in pixels, used for voxel grid representation
+flip: False  # whether to flip the event data
