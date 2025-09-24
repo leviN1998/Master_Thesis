@@ -33,12 +33,15 @@ def preprocess(data):
     events = eventIO.load_hdf5(dataset_path + data["path"] + "events.hdf5")
     metadata = pd.read_csv(dataset_path + data["path"] + "metadata.csv")
     coords = pd.read_csv(dataset_path + data["path"] + "ball_coords.csv")
-    roi = extract_roi(events, metadata, coords)
     path = data["path"]
     roi_path = path.replace("data/", "", 1) + "roi.hdf5"
-    os.makedirs(output_path + roi_path[:5])
-    # eventIO.create_video(roi, output_path + roi_path.replace(".hdf5", ".mp4"))
-    eventIO.save_hdf5(roi, output_path + roi_path, bias=[0], resolution=(roi_size, roi_size))
+    if not os.path.exists(output_path + roi_path[:5]):
+        roi = extract_roi(events, metadata, coords)
+        os.makedirs(output_path + roi_path[:5], exist_ok=True)
+        # eventIO.create_video(roi, output_path + roi_path.replace(".hdf5", ".mp4"))
+        eventIO.save_hdf5(roi, output_path + roi_path, bias=[0], resolution=(roi_size, roi_size))
+    else:
+        print(f"ROI already exists: {output_path + roi_path}")
 
 
 def extract_roi(events, metadata, coords):
