@@ -18,40 +18,6 @@ def angle_to_axis(vx, vy, vz, zhat):
     return np.degrees(np.arccos(cos_theta))
 
 if __name__ == "__main__":
-    df = pd.read_csv(path + "config/simulation.csv")
-    finished_first = 0
-    unfisnished_first = 0
-    finished_second = 0
-    unfinished_second = 0
-    for i in range(len(df)):
-        if i < 5000:
-            if df.iloc[i]["finished"]:
-                finished_first += 1
-            else:
-                unfisnished_first += 1
-        else:
-            if df.iloc[i]["finished"]:
-                finished_second += 1
-            else:
-                unfinished_second += 1
-
-    print(f"First half: {finished_first} finished, {unfisnished_first} unfinished")
-    print(f"Second half: {finished_second} finished, {unfinished_second} unfinished")
-
-    threshold = 20
-    for i in range(len(df)):
-        sample = df.iloc[i]
-        if not sample["finished"]:
-            vx, vy, vz = sample["rotation_x"], sample["rotation_y"], sample["rotation_z"]
-            pos_x = angle_to_axis(vx, vy, vz, (1, 0, 1))  # backspin
-            neg_x = angle_to_axis(vx, vy, vz, (-1, 0, 0)) # topspin
-
-            if min(pos_x, neg_x) >= threshold:
-                df.loc[i, "finished"] = True
-
-    df.to_csv(path + "config/simulation.csv", index=False)
-
-    """
     dfs = []
     for i in range(num_threads):
         df = pd.read_csv(path + f"config/simulation_pid{i+index_offset}.csv")
@@ -73,4 +39,4 @@ if __name__ == "__main__":
             print(f"Warning: Simulation {i} is not finished in any thread")
 
     merged_df.to_csv(path + "config/simulation.csv", index=False)
- """
+ 
