@@ -79,8 +79,14 @@ def extract_roi(events, metadata, coords):
 
 
 if __name__ == "__main__":
-    df = pd.read_csv(dataset_path + "config/simulation.csv")
-    df = df[df["finished"] == True]
+    df_big = pd.read_csv(dataset_path + "config/simulation.csv")
+    print(len(df_big))
+    df = df_big[(df_big["finished"]) == True]
+    print(len(df))
+    df = df[df["path"] != "not set"]
+    print(len(df))
+    
+    
     print(f"Loaded {len(df)} finished simulations.")
     print(df)
     print(df.iloc[0])
@@ -91,3 +97,17 @@ if __name__ == "__main__":
 
     for i in tqdm.tqdm(range(len(df))):
         preprocess(df.iloc[i])
+
+        """
+        Check if files exist, if not set finished to False
+
+
+        data = df.iloc[i]
+        if not os.path.exists(dataset_path + data["path"] + "events.hdf5"):
+            print(data["path"])
+            # print(df_big.loc[df_big["index"] == data["index"]])
+            df_big.loc[df_big["index"] == data["index"], "finished"] = False
+            df_big.loc[df_big["index"] == data["index"], "path"] = "not set"
+            
+    df_big.to_csv(dataset_path + "config/simulation.csv", index=False)
+    """
