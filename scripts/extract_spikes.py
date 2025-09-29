@@ -14,9 +14,22 @@ def load_buffer():
     buf.ms_to_idx = eventIO.generate_ms_to_idx(buf.get_ts())
     return buf
 
+# ---------------------- 1. ---------------------------------
+# spin_values =     [2,  2, 2,  3, 3,  3, 3, 3,  4,  4]
+# sidespin_values = [-1, 0, 1, -2, -1, 0, 1, 2, -3, -2]
 
-spin_values =     [2,  2, 2,  3, 3,  3, 3, 3,  4,  4]
-sidespin_values = [-1, 0, 1, -2, -1, 0, 1, 2, -3, -2]
+# ---------------------- 2. ---------------------------------
+# spin_values =     [4,  4,  4,  4,  5,  5,  5,  5,  5,  5] 
+# sidespin_values = [0,  1,  2,  3, -3, -2, -1,  0,  1,  2] 
+
+# ---------------------- 3. ---------------------------------
+# spin_values =     [5,  6,  6,  6,  6,  6,  6,  6,  6,  6] 
+# sidespin_values = [3, -4, -3, -2, -1,  0,  1,  2,  3,  4] 
+
+# ---------------------- tmp --------------------------------
+spin_values =     [5,  6,  6,  6,  6,  6,  6,  6,  6,  6] 
+sidespin_values = [3, -4, -3, -2, -1,  0,  1,  2,  3,  4] 
+#                                                      
 
 
 def convert_recording():
@@ -26,8 +39,14 @@ def convert_recording():
     for i, spike in enumerate(spikes):
         buf_spike = get_events_for_spike(spike, buf)
         bias = [0, 0]
-        eventIO.save_hdf5_metavision(buf_spike, path + f"tmp/spin{spin_values[i]}_sidespin{sidespin_values[i]}.hdf5", bias)
-        eventIO.create_video(buf_spike, path + f"tmp/spin{spin_values[i]}_sidespin{sidespin_values[i]}.mp4", resolution=(1280, 720), fps=30.0, tw=500)
+        copy = 0
+        for j in range(i):
+            if spin_values[j] == spin_values[i] and sidespin_values[j] == sidespin_values[i]:
+                copy += 1
+                print(f"Found duplicate for spin {spin_values[i]} and sidespin {sidespin_values[i]}. Incrementing index to {copy}.")
+        copy = f"({copy})" if copy > 0 else ""
+        eventIO.save_hdf5_metavision(buf_spike, path + f"tmp/spin{spin_values[i]}_sidespin{sidespin_values[i]}{copy}.hdf5", bias)
+        eventIO.create_video(buf_spike, path + f"tmp/spin{spin_values[i]}_sidespin{sidespin_values[i]}{copy}.mp4", resolution=(1280, 720), fps=30.0, tw=500)
         print(f"Saved spike {i} with {buf_spike.i} events.")
 
 
@@ -47,7 +66,12 @@ def extract_spikes(buf, threshold=2000):
         spikes.append(current_spike)
 
     if len(spikes) != len(spin_values):
-        sys.exit(f"Error: Expected {len(spin_values)} spikes, but found {len(spikes)}")
+        if len(spikes) > len(spin_values):
+            print(f"Warning: Expected {len(spin_values)} spikes, but found {len(spikes)}. Continuing anyway.")
+            spikes = spikes[:len(spin_values)]
+
+        else:
+            sys.exit(f"Error: Expected {len(spin_values)} spikes, but found {len(spikes)}")
 
     return spikes
 
