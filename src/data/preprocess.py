@@ -22,7 +22,7 @@ import eventIO
 import tqdm
 
 
-dataset_path = "/data/lkolmar/datasets/realistic/"
+dataset_path = "/data/lkolmar/datasets/realistic_topspin/"
 output_path = dataset_path + "preprocessed/"
 
 roi_size = 100  # size of the region of interest in pixels

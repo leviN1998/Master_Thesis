@@ -121,3 +121,35 @@ class ClassificationHead(nn.Module):
         x = self.fc(x)
 
         return x
+    
+
+class AdaptiveAvgHead(nn.Module):
+    """ Head with adaptive average pooling and a fully connected layer.
+    """
+
+    def __init__(self, input_channels: int, hidden_channels: int, num_classes: int):
+        """ Initialize the adaptive average pooling head.
+        
+        :param input_channels: Number of input channels.
+        :param num_classes: Number of output classes.
+        """
+        super().__init__()
+        self.conv = nn.Conv2d(input_channels, out_channels=hidden_channels, kernel_size=1)
+        self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(hidden_channels, num_classes)
+
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """ Forward pass through the adaptive average pooling head.
+        
+        :param x: Input tensor of shape (batch_size, input_channels, height, width).
+        :return: Output tensor of shape (batch_size, num_classes).
+        """
+        x = self.conv(x)
+        x = torch.relu(x)
+        x = self.adaptive_pool(x)
+        x = x.view(x.size(0), -1)  # Flatten the tensor
+        x = torch.relu(x)
+        x = self.fc(x)
+
+        return x

@@ -13,7 +13,7 @@ import rotations
 import tqdm
 
 
-dataset_path = "/data/lkolmar/datasets/topspin_fit_to_max/"
+dataset_path = "/data/lkolmar/datasets/realistic_topspin/"
 labels = {
     "topspin_slow": 0,
     "topspin_mid": 1,
@@ -22,6 +22,10 @@ labels = {
     "backspin_mid": 4,
     "backspin_fast": 5,
 }
+# labels = {
+#     "topspin" : 0,
+#     "backspin": 1, 
+# }
 
 def label_data(data):
     spin = rotations.Rotation()
@@ -30,13 +34,17 @@ def label_data(data):
     topspin = 0 if spin.get_axis()[0] < 0 else 1
     # print(f"Topspin: {topspin}")
     speed = 0
-    if spin.get_angle() < 30:
+    if spin.get_angle() < 50:
         speed = 0
-    elif spin.get_angle() < 55:
+    elif spin.get_angle() < 95:
         speed = 1
     else:
         speed = 2
     label = labels["topspin_slow"] + topspin * 3 + speed
+
+    # for only 2 labels
+    # label = 1 - topspin
+
     # print(f"Label: {label}")
     return label
 
