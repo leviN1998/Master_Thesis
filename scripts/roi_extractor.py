@@ -12,7 +12,7 @@ import eventIO
 import tqdm
 import os
 import shutil
-
+import pickle
 
 """
 
@@ -22,7 +22,7 @@ import shutil
 
 """
 
-def find_centers(images, radius, p=0.8):
+def find_centers(images, radius, p=0.8, verbose=True):
     r = radius
     kernel = np.zeros((int(2*r)+1, int(2*r)+1))
     for y in range(int(2*r)):
@@ -32,7 +32,11 @@ def find_centers(images, radius, p=0.8):
         kernel[x1][y] = 1
         kernel[x2][y] = 1
 
-    centers = [get_center(k, kernel, p) for k in tqdm.tqdm(images)]
+    if verbose:
+        centers = [get_center(k, kernel, p) for k in tqdm.tqdm(images)]
+    else:
+        centers = [get_center(k, kernel, p) for k in images]
+    
     return centers
 
 
@@ -80,7 +84,7 @@ def interpolate_positions(known_positions, n_coordinates, known_indices=None):
 
 
 
-def process_sequence(buffer, n_centers, n_coordinates):
+def process_sequence(buffer, n_centers, n_coordinates, verbose=True):
     # make sure ts start at 0
     x = buffer.get_x()
     y = buffer.get_y()
@@ -98,12 +102,13 @@ def process_sequence(buffer, n_centers, n_coordinates):
 
     # select n_centers images
     step = n_bins // n_centers
-    print(f"Selecting every {step} image to get {n_centers} centers.")
+    if verbose:
+        print(f"Selecting every {step} image to get {n_centers} centers.")
     selected_indices = np.round(np.linspace(0, n_bins - 1, n_centers)).astype(int)
     selected_images = images[selected_indices]
 
     # extract centers
-    centers = find_centers(selected_images, radius=30)
+    centers = find_centers(selected_images, radius=30, verbose=verbose)
     
     # interpolate to get n_coordinates coordinates
     full_positions = interpolate_positions(centers, n_coordinates, known_indices=selected_indices)
@@ -112,29 +117,29 @@ def process_sequence(buffer, n_centers, n_coordinates):
 
 
 if __name__ == "__main__":
-    buf = eventIO.load_hdf5("/home/lkolmar/Documents/metavision/recordings/new_real_dataset/raw_data/program1/spin2_sidespin0_0.hdf5")
     n_centers = 20
     n_coordinates = 600
-    width, height = 1280, 720 # always the same for our recordings
 
-    images = np.zeros((n_coordinates, height, width), dtype=np.float32)
-    x = buf.get_x()
-    y = buf.get_y()
-    t = buf.get_ts()
-    dt = (np.max(t) - np.min(t)) / n_coordinates
-    bin_indices = np.floor((t - np.min(t)) / dt).astype(int)
-    bin_indices = np.clip(bin_indices, 0, n_coordinates - 1)
-    np.add.at(images, (bin_indices, y, x), 1)
+    data_path = "/home/lkolmar/Documents/metavision/recordings/new_real_dataset/raw_data/"
+    output_path = "/home/lkolmar/Documents/metavision/recordings/new_real_dataset/roi_coords/"
 
-    coords = process_sequence(buf, n_centers=n_centers, n_coordinates=n_coordinates)
-    print("Plotting 2 x 5 random images")
-    fig, axes = plt.subplots(2, 5, figsize=(15, 6))
-    indices = np.random.choice(n_coordinates, size=10, replace=False)
-    for ax, idx in zip(axes.flat, indices):
-        ax.imshow(images[idx], cmap='gray')
-        x, y = coords[idx]
-        ax.plot(x, y, 'ro')
-        ax.set_title(f"Frame {idx}")
-        ax.axis('off')
-    plt.tight_layout()
-    plt.show()
+    folders = [f for f in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, f))]
+    paths = []
+    for folder in folders:
+        file_names = [f for f in os.listdir(os.path.join(data_path, folder)) if f.endswith('.hdf5')]
+        for name in file_names:
+            paths.append(os.path.join(data_path,folder, name))
+    
+    for path in tqdm.tqdm(paths):    
+        name = os.path.basename(path)
+        # print(f"Processing {name}...")
+        buf = eventIO.load_hdf5(path)
+
+        coords = process_sequence(buf, n_centers=n_centers, n_coordinates=n_coordinates, verbose=False)
+
+        with open(output_path + name.replace(".hdf5", ".pkl"), "wb") as f:
+            pickle.dump(coords, f)
+
+        # test = pickle.load(open(output_path + name.replace(".hdf5", ".pkl"), "rb"))
+        # print(test)
+    
