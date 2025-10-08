@@ -20,6 +20,7 @@ import numpy as np
 sys.path.append("src/utils")
 import eventIO
 import tqdm
+import pickle
 
 
 dataset_path = "/data/lkolmar/datasets/realistic_topspin/"
@@ -44,9 +45,29 @@ def preprocess(data):
         print(f"ROI already exists: {output_path + roi_path}")
 
 
+def preprocess_real(hdf5_path, coords_path, output_path):
+    events = eventIO.load_hdf5(hdf5_path)
+    with open(coords_path, "rb") as f:
+        coords = pickle.load(f)
+
+    coords_df = pd.DataFrame(coords, columns=["screen_x", "screen_y"])
+    #print(coords_df)
+    #print(events.get_ts()[-1], events.get_ts()[0])
+    ts = events.get_ts() - events.get_ts()[0]
+    events.ts = ts
+    #print(events.get_ts()[-1], events.get_ts()[0])
+    metadata = pd.DataFrame({
+        "video_length": [(events.get_ts()[-1]) / 1e6], # in seconds
+        "total_frames": [len(coords_df)]
+    })
+    roi = extract_roi(events, metadata, coords_df)
+    eventIO.save_hdf5(roi, output_path, bias=[0], resolution=(roi_size, roi_size))
+
+
 def extract_roi(events, metadata, coords):
     total_time_us = metadata["video_length"].values[0] * 1e6
     frame_time_us = total_time_us / metadata["total_frames"].values[0]
+    #print(f"Total time: {total_time_us} us, Frame time: {frame_time_us} us, passed time {metadata['video_length'].values[0]} s")
     xs = np.array([], dtype=np.int32)
     ys = np.array([], dtype=np.int32)
     ts = np.array([], dtype=np.uint64)
@@ -54,6 +75,8 @@ def extract_roi(events, metadata, coords):
     for f in range(metadata["total_frames"].values[0]):
         t = f * frame_time_us
         frame_coord = coords.iloc[f]
+        #print(f"Frame {f}: time {t} us, coord ({frame_coord['screen_x']}, {frame_coord['screen_y']})")
+        
         idxs_frame = np.where((events.ts >= t) & (events.ts < t + frame_time_us))[0]
 
         xs_frame, ys_frame, ts_frame, ps_frame = events.x[idxs_frame], events.y[idxs_frame], events.ts[idxs_frame], events.p[idxs_frame]
@@ -77,8 +100,7 @@ def extract_roi(events, metadata, coords):
     ev.i = xs.shape[0]
     return ev
 
-
-if __name__ == "__main__":
+def main_sim():
     df_big = pd.read_csv(dataset_path + "config/simulation.csv")
     print(len(df_big))
     df = df_big[(df_big["finished"]) == True]
@@ -111,3 +133,31 @@ if __name__ == "__main__":
             
     df_big.to_csv(dataset_path + "config/simulation.csv", index=False)
     """
+        
+def main_real():
+    base_path = "/home/lkolmar/Documents/metavision/recordings/new_real_dataset/"
+    raw_data_path = base_path + "raw_data/"
+    roi_coords_path = base_path + "roi_coords/"
+    output_path = base_path + "preprocessed/"
+
+    folders = [f for f in os.listdir(raw_data_path) if os.path.isdir(os.path.join(raw_data_path, f))]
+    files = []
+    for folder in folders:
+        file_names = [f for f in os.listdir(os.path.join(raw_data_path, folder)) if f.endswith('.hdf5')]
+        for name in file_names:
+            files.append(os.path.join(folder, name))
+
+    print(f"Found {len(files)} files.")
+    print(files[0])
+
+    for file in tqdm.tqdm(files):
+        filename = file.replace("program1/", "").replace("program2/", "").replace("program3/", "").replace("program4/", "").replace("program5/", "").replace("program6/", "")
+
+        preprocess_real(
+            hdf5_path = os.path.join(raw_data_path, file),
+            coords_path = os.path.join(roi_coords_path, filename.replace(".hdf5", ".pkl")),
+            output_path = os.path.join(output_path, filename.replace("raw_data/", ""))
+        )
+
+if __name__ == "__main__":
+    main_real()

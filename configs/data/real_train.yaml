@@ -1,0 +1,10 @@
+_target_: src.data.topspin_datamodule.TopspinDataModule
+data_dir: /home/lkolmar/Documents/metavision/recordings/new_real_dataset/dataset/train/
+batch_size: 128  # Needs to be divisible by the number of devices
+train_val_test_split: [400, 40, 8] # 448
+num_workers: 7
+pin_memory: False
+time_window: 5000  # in us, used for creating sequences from events
+num_bins: 10  # number of bins for voxel grid representation
+sensor_size: [100, 100]  # size of the sensor in pixels, used for voxel grid representation
+flip: False  # whether to flip the event data
