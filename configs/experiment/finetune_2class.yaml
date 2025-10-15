@@ -15,14 +15,14 @@ defaults:
 
 tags: ["topspin", "firenet_net"]
 
-ckpt_path: "logs/train/runs/2025-10-06_14-48-23/checkpoints/epoch_006.ckpt"
+# ckpt_path: "logs/train/runs/2025-10-06_14-48-23/checkpoints/epoch_006.ckpt"
 
 
 # seed: 1234567
 
 trainer:
   min_epochs: 10
-  max_epochs: 50
+  max_epochs: 30
   gradient_clip_val: 0.5
 
 
@@ -31,11 +31,13 @@ model:
     lr: 0.0001
   net:
     input_channels: 10
+    pretrained_weights: "logs/train/runs/2025-10-06_14-48-23/checkpoints/epoch_006.ckpt"
     head: 
       _target_: src.models.components.subcomponents.AdaptiveAvgHead
       input_channels: 16
       hidden_channels: 32
       num_classes: 2
+      pretrained_weights: "logs/train/runs/2025-10-06_14-48-23/checkpoints/epoch_006.ckpt"
   compile: false
 
 

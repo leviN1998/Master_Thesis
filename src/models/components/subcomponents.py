@@ -127,7 +127,7 @@ class AdaptiveAvgHead(nn.Module):
     """ Head with adaptive average pooling and a fully connected layer.
     """
 
-    def __init__(self, input_channels: int, hidden_channels: int, num_classes: int):
+    def __init__(self, input_channels: int, hidden_channels: int, num_classes: int, pretrained_weights: str = None):
         """ Initialize the adaptive average pooling head.
         
         :param input_channels: Number of input channels.
@@ -137,6 +137,12 @@ class AdaptiveAvgHead(nn.Module):
         self.conv = nn.Conv2d(input_channels, out_channels=hidden_channels, kernel_size=1)
         self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(hidden_channels, num_classes)
+        if pretrained_weights is not None:
+            print(f"Loading pretrained weights from {pretrained_weights}")
+            checkpoint = torch.load(pretrained_weights, map_location="cpu", weights_only=False)
+            model_weights = checkpoint['state_dict']
+            model_weights = {k.replace("net.head.", ""): v for k, v in model_weights.items() if "head." in k}
+            self.load_state_dict(model_weights)
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -153,3 +159,105 @@ class AdaptiveAvgHead(nn.Module):
         x = self.fc(x)
 
         return x
+    
+
+class RegressionHead(nn.Module):
+    """ Head for regression tasks.
+    """
+
+    def __init__(self, input_channels: int, hidden_channels: int, output_channels: int, pretrained_weights: str = None):
+        super().__init__()
+        self.input_channels = input_channels
+        self.hidden_channels = hidden_channels
+        self.output_channels = output_channels
+        self.conv = nn.Conv2d(input_channels, out_channels=hidden_channels, kernel_size=1)
+        self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(hidden_channels, output_channels)
+
+        self.register_buffer("bias_identity", torch.eye(3).flatten())
+
+        # TODO: Load pretrained weights if provided
+        
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """ Forward pass through the regression head.
+        
+        :param x: Input tensor of shape (batch_size, input_channels, height, width).
+        :return: Output tensor of shape (batch_size, output_channels).
+        """
+        x = self.conv(x)
+        x = torch.relu(x)
+        x = self.adaptive_pool(x)
+        x = x.view(x.size(0), -1)  # Flatten the tensor
+        x = self.fc(x)
+
+        x = x + 0.01 * self.bias_identity
+        M = x.view(-1, 3, 3)  
+
+        return M
+    
+
+class EasyNet(nn.Module):
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.fc1 = nn.Linear(10000, 50)
+        self.fc2 = nn.Linear(50, 9)
+
+    def forward(self, x: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
+        x = x.permute(1, 0, 2, 3, 4)
+        
+        sequence_length, batch_size, input_channels, h, w = x.size()
+
+        batch = x[5, :, 7, :, :]
+        # print("batch shape:", batch.shape)
+        x = batch.flatten(start_dim=1)
+        # print("x shape:", x.shape)
+
+        x = self.fc1(x)
+        x = torch.relu(x)
+        x = self.fc2(x)
+        return x.view(-1, 3, 3)
+    
+
+
+class DebugNet(nn.Module):
+    def __init__(self, **kwargs):
+        super().__init__()
+        input_channels = 16
+        hidden_channels = 32
+        output_channels = 9
+        self.input_channels = input_channels
+        self.hidden_channels = hidden_channels
+        self.output_channels = output_channels
+        self.conv_flatten = nn.Conv2d(10, input_channels, kernel_size=1)
+        self.conv = nn.Conv2d(input_channels, out_channels=hidden_channels, kernel_size=1)
+        self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(hidden_channels, output_channels)
+
+        self.register_buffer("bias_identity", torch.eye(3).flatten())
+
+        # TODO: Load pretrained weights if provided
+        
+
+    def forward(self, x: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
+        """ Forward pass through the regression head.
+        
+        :param x: Input tensor of shape (batch_size, input_channels, height, width).
+        :return: Output tensor of shape (batch_size, output_channels).
+        """
+        x = x.permute(1, 0, 2, 3, 4)
+        
+        sequence_length, batch_size, input_channels, h, w = x.size()
+        batch = x[5]
+
+        x = self.conv_flatten(batch)
+        x = self.conv(x)
+        x = torch.relu(x)
+        x = self.adaptive_pool(x)
+        x = x.view(x.size(0), -1)  # Flatten the tensor
+        x = self.fc(x)
+
+        x = x + 0.01 * self.bias_identity
+        M = x.view(-1, 3, 3)  
+
+        return M

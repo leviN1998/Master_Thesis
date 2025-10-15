@@ -1,7 +1,7 @@
-_target_: src.data.topspin_datamodule.TopspinDataModule
-data_dir: /home/lkolmar/Documents/metavision/recordings/new_real_dataset/dataset/full/
+_target_: src.data.regression_datamodule.RegressionDataModule
+data_dir: /data/lkolmar/datasets/realistic_topspin/
 batch_size: 128  # Needs to be divisible by the number of devices
-train_val_test_split: [476, 56, 28] # 448   mit full data (476, 56, 28) 85, 10, 5
+train_val_test_split: [9240, 1980, 1980]   # n = 13200 (70%, 15%, 15%)     (80, 10, 10) -> 10560 1320 1320
 num_workers: 7
 pin_memory: False
 time_window: 5000  # in us, used for creating sequences from events

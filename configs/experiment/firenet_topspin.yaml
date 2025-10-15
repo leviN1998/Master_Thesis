@@ -43,6 +43,7 @@ data:
   num_workers: 2
   time_window: 7000
   num_bins: 10
+  train_val_test_split: [10, 1, 1]
 
 logger:
   wandb:

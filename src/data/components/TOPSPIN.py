@@ -7,6 +7,7 @@ import sys
 sys.path.append("src/utils")
 import eventIO
 import time
+import src.utils.regression_utils as regression_utils
 
 
 events_struct = np.dtype(
@@ -64,6 +65,58 @@ class Hdf5Dataset(Dataset):
         # print(f"Time taken for __getitem__: {end - start:.4f} seconds")
         return array, label
     
+
+class Hdf5DatasetRegression(Dataset):
+    """Custom dataset for loading HDF5 files containing event data for regression tasks.
+    
+        The dataset is created to behave like the tonic event datasets.
+    """
+
+    def __init__(self, dataset_path: str, indices, transforms=None):
+        """
+        Initialize the dataset.
+
+        :param file_path: Path to the root dir of the dataset folder bsp: ("/data/lkolmar/datasets/topspin_fit_to_max/").
+        :param indices: List of indices to account for different splits.
+        :param transforms: Optional transforms to apply to the data.
+        """
+        self.dataset_path = dataset_path
+        self.indices = indices
+        self.transforms = transforms
+
+    def __len__(self):
+        """Return the number of samples in the dataset."""
+        return len(self.indices)
+    
+    def __getitem__(self, idx):
+        """Get a sample from the dataset.
+
+        :param idx: Index of the sample to retrieve.
+        :return: Transformed event data and its label. ([x,y,t,p], label)
+        """
+        index = self.indices[idx]
+        index_string = str(index).zfill(5)
+        events = eventIO.load_hdf5(self.dataset_path + f"preprocessed/{index_string}/{index_string}_roi.hdf5")
+        array = np.empty_like(events.get_x(), dtype=events_struct)
+        array["x"] = events.get_x()
+        array["y"] = events.get_y()
+        array["t"] = events.get_ts()
+        array["p"] = events.get_p()
+
+        if self.transforms is not None:
+            array = self.transforms(array)
+        
+        # Load the regression target
+        target = pd.read_csv(self.dataset_path + f"data/{index_string}/{index_string}_ground_truth.csv")
+        x = target["rotation_x"].values[0]
+        y = target["rotation_y"].values[0]
+        z = target["rotation_z"].values[0]
+        omega = target["rotation_omega"].values[0]
+        spin = torch.tensor([x, y, z], dtype=torch.float32)
+        spin = (spin / torch.linalg.norm(spin)) * omega
+        spin = regression_utils.axis_angle_to_rotmat_torch(spin)
+
+        return array, spin
 
 
 if __name__ == "__main__":

@@ -41,6 +41,7 @@ class TopspinDataModule(LightningDataModule):
         num_workers: int = 0,
         pin_memory: bool = False,
         seed: int = 42,
+        max_len: int = 0,
     ) -> None:
         """Initialize a `TopspinDataModule`.
 
@@ -58,7 +59,7 @@ class TopspinDataModule(LightningDataModule):
             # Add any necessary transformations here
             lambda ev: event_representations.create_sequence(ev, 
                                                             self.hparams.time_window, self.hparams.num_bins, 
-                                                            self.hparams.sensor_size, flip=self.hparams.flip),  # create sequences from events
+                                                            self.hparams.sensor_size, flip=self.hparams.flip, max_len=self.hparams.max_len),  # create sequences from events
         ])
         # one sample is now [time_bins, num_bins, sensor_size[0], sensor_size[1]]
 
@@ -201,7 +202,7 @@ def pad_collate_fn(batch: list) -> Tuple[torch.Tensor, torch.Tensor]:
     events = [torch.tensor(ev, dtype=torch.float32) for ev in events]
     lengths = [ev.shape[0] for ev in events]  # Get lengths of each sequence
     padded_sequences = torch.nn.utils.rnn.pad_sequence(sequences=events, batch_first=True, padding_value=0)
-    labels_tensor = torch.tensor(labels)
+    labels_tensor = torch.tensor(np.array(labels))
     
     return padded_sequences, torch.tensor(lengths), labels_tensor
 
