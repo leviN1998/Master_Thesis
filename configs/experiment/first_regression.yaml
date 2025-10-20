@@ -29,7 +29,7 @@ callbacks:
 
 trainer:
   min_epochs: 10
-  max_epochs: 100
+  max_epochs: 500
   gradient_clip_val: 0.5
 
 
@@ -37,9 +37,9 @@ model:
 #  optimizer:
 #    lr: 0.001
   net:
-    _target_: src.models.components.subcomponents.DebugNet
+    #_target_: src.models.components.fire_net.FireNet
     #pretrained_weights: "logs/train/runs/2025-10-06_17-11-51/checkpoints/epoch_045.ckpt"
-    #hidden_channels: 2
+    hidden_channels: 16
     #kernel_size: 9
     #head:
       #input_channels: 2
@@ -50,7 +50,7 @@ data:
   num_workers: 2
   time_window: 7000
   num_bins: 10
-  train_val_test_split: [8, 1, 1]
+  #train_val_test_split: [8, 1, 1]
 
 logger:
   wandb:

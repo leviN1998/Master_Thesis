@@ -2,9 +2,9 @@ import pandas as pd
 import numpy as np
 
 
-path = "/data/lkolmar/datasets/realistic_topspin/"
+path = "/data/lkolmar/datasets/spindoe_topspin/"
 
-num_threads = 2
+num_threads = 9
 index_offset = 0 # does the first thread start at 0 or 1?
 
 if __name__ == "__main__":

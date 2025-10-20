@@ -170,11 +170,10 @@ class RegressionHead(nn.Module):
         self.input_channels = input_channels
         self.hidden_channels = hidden_channels
         self.output_channels = output_channels
-        self.conv = nn.Conv2d(input_channels, out_channels=hidden_channels, kernel_size=1)
-        self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear(hidden_channels, output_channels)
+        
+        self.conv = nn.Conv2d(input_channels, out_channels=1, kernel_size=1)
+        self.fc = nn.Linear(100*100, output_channels)
 
-        self.register_buffer("bias_identity", torch.eye(3).flatten())
 
         # TODO: Load pretrained weights if provided
         
@@ -187,11 +186,10 @@ class RegressionHead(nn.Module):
         """
         x = self.conv(x)
         x = torch.relu(x)
-        x = self.adaptive_pool(x)
+        
         x = x.view(x.size(0), -1)  # Flatten the tensor
         x = self.fc(x)
 
-        x = x + 0.01 * self.bias_identity
         M = x.view(-1, 3, 3)  
 
         return M

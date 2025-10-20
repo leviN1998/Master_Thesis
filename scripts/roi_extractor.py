@@ -117,18 +117,30 @@ def process_sequence(buffer, n_centers, n_coordinates, verbose=True):
 
 
 if __name__ == "__main__":
-    n_centers = 20
-    n_coordinates = 600
+    n_centers = 8
+    n_coordinates = 140
 
-    data_path = "/home/lkolmar/Documents/metavision/recordings/new_real_dataset/raw_data/"
-    output_path = "/home/lkolmar/Documents/metavision/recordings/new_real_dataset/roi_coords/"
+    #data_path = "/home/lkolmar/Documents/metavision/recordings/new_real_dataset/raw_data/"
+    #output_path = "/home/lkolmar/Documents/metavision/recordings/new_real_dataset/roi_coords/"
+    data_path = "/data/lkolmar/datasets/spindoe_topspin/data/"
+    output_path = "/data/lkolmar/datasets/spindoe_topspin/roi_coords/"
 
+    #folders = [f for f in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, f))]
+    #paths = []
+    #for folder in folders:
+    #    file_names = [f for f in os.listdir(os.path.join(data_path, folder)) if f.endswith('.hdf5')]
+    #    for name in file_names:
+    #        paths.append(os.path.join(data_path,folder, name))
     folders = [f for f in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, f))]
     paths = []
     for folder in folders:
         file_names = [f for f in os.listdir(os.path.join(data_path, folder)) if f.endswith('.hdf5')]
         for name in file_names:
-            paths.append(os.path.join(data_path,folder, name))
+            paths.append(os.path.join(data_path, folder, name))
+    
+    print(f"Found {len(paths)} files.")
+    print(paths[0])
+    
     
     for path in tqdm.tqdm(paths):    
         name = os.path.basename(path)

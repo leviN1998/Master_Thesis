@@ -121,7 +121,7 @@ class FireNet(nn.Module):
         last_feat = torch.zeros(batch_size, self.hidden_channels, h, w, dtype=x.dtype, device=x.device)
 
         for t in range(sequence_length):
-            continue
+            #continue
             mask = (lengths > t).float() # [batch]
             mask = mask.view(-1, 1, 1, 1)  # [batch, 1, 1, 1]
             x_t = x[t]
@@ -146,9 +146,9 @@ class FireNet(nn.Module):
             output += x_t * is_last_step
             """
 
-        #x = self.res2(last_feat)
+        x = self.res2(last_feat)
 
-        x = self.conv_flatten(x[5])
+        #x = self.conv_flatten(x[5])
         output = self.head(x)
 
         return output

@@ -23,7 +23,7 @@ import tqdm
 import pickle
 
 
-dataset_path = "/data/lkolmar/datasets/realistic_topspin/"
+dataset_path = "/data/lkolmar/datasets/spindoe_topspin/"
 output_path = dataset_path + "preprocessed/"
 
 roi_size = 100  # size of the region of interest in pixels
@@ -72,9 +72,27 @@ def extract_roi(events, metadata, coords):
     ys = np.array([], dtype=np.int32)
     ts = np.array([], dtype=np.uint64)
     ps = np.array([], dtype=np.int32)
+
+    # start_pos_x = (((metadata["ball_start_y"].values[0] + 0.45) / 0.9) * 1280) 
+    # start_pos_y = (((metadata["ball_start_z"].values[0])))
+    # end_pos_x = (((metadata["ball_end_y"].values[0] + 0.45) / 0.9) * 1280)
+    # end_pos_y = metadata["ball_end_z"].values[0]
+
+    # print(f"Ball start: {(start_pos_x, start_pos_y)}, Ball end: {(end_pos_x, end_pos_y)}")
+
     for f in range(metadata["total_frames"].values[0]):
+        # temp: only use frames that are between 100 and 240
+        # if f < 100 or f > 240:
+        #     continue
+
         t = f * frame_time_us
-        frame_coord = coords.iloc[f]
+        matches = coords[coords["frame"] == f]
+        if matches.empty:
+            continue
+        frame_coord = matches.iloc[0]
+        #print(f)
+        #print(frame_coord)
+        #print()
         #print(f"Frame {f}: time {t} us, coord ({frame_coord['screen_x']}, {frame_coord['screen_y']})")
         
         idxs_frame = np.where((events.ts >= t) & (events.ts < t + frame_time_us))[0]
@@ -88,16 +106,41 @@ def extract_roi(events, metadata, coords):
         ys_roi = ys_frame[idxs_roi] - int(np.ceil(frame_coord["screen_y"] - roi_size // 2))
         ts_roi = ts_frame[idxs_roi]
         ps_roi = ps_frame[idxs_roi]
+
+
+        # build a 100x100 grid centered at the frame coordinate
+        #x0 = int(np.ceil(frame_coord["screen_x"] - roi_size // 2))
+        #y0 = int(np.ceil(frame_coord["screen_y"] - roi_size // 2))
+#
+        #xs_range = np.arange(x0, x0 + roi_size, dtype=np.int32)
+        #ys_range = np.arange(y0, y0 + roi_size, dtype=np.int32)
+        #xs_mesh, ys_mesh = np.meshgrid(xs_range, ys_range, indexing='xy')
+#
+        #xs_roi = xs_mesh.ravel()
+        #ys_roi = ys_mesh.ravel()
+#
+        ## assign timestamps and polarities for each synthetic pixel event
+        #ts_roi = np.full(xs_roi.shape, int(t), dtype=np.uint64)
+        #ps_roi = np.zeros(xs_roi.shape, dtype=np.int32)
+#
+        #xs_roi = np.concatenate((xs_roi, xs_frame))
+        #ys_roi = np.concatenate((ys_roi, ys_frame))
+        #ts_roi = np.concatenate((ts_roi, ts_frame))
+        #ps_roi = np.concatenate((ps_roi, ps_frame))
+
+
         xs = np.concatenate((xs, xs_roi))
         ys = np.concatenate((ys, ys_roi))
         ts = np.concatenate((ts, ts_roi))
         ps = np.concatenate((ps, ps_roi))
     ev = eventIO.EventBuffer(0)
+    #ts = ts - ts[0]  # reset time to start at 0
     ev.x = xs[:]
     ev.y = ys[:]
     ev.ts = ts[:]
     ev.p = ps[:]
     ev.i = xs.shape[0]
+    
     return ev
 
 def main_sim():
@@ -117,6 +160,9 @@ def main_sim():
     print(suffix)
     # preprocess(df.iloc[0])
 
+    preprocess(df.iloc[2])
+    return
+
     for i in tqdm.tqdm(range(len(df))):
         preprocess(df.iloc[i])
 
@@ -135,8 +181,8 @@ def main_sim():
     """
         
 def main_real():
-    base_path = "/home/lkolmar/Documents/metavision/recordings/new_real_dataset/"
-    raw_data_path = base_path + "raw_data/"
+    base_path = "/home/lkolmar/Documents/metavision/recordings/spindoe_topspin/"
+    raw_data_path = base_path + "data/"
     roi_coords_path = base_path + "roi_coords/"
     output_path = base_path + "preprocessed/"
 
