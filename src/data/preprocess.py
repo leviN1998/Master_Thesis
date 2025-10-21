@@ -23,7 +23,7 @@ import tqdm
 import pickle
 
 
-dataset_path = "/data/lkolmar/datasets/spindoe_topspin/"
+dataset_path = "/data/lkolmar/datasets/realistic_topspin/"
 output_path = dataset_path + "preprocessed/"
 
 roi_size = 100  # size of the region of interest in pixels
@@ -39,7 +39,7 @@ def preprocess(data):
     if not os.path.exists(output_path + roi_path[:5]):
         roi = extract_roi(events, metadata, coords)
         os.makedirs(output_path + roi_path[:5], exist_ok=True)
-        # eventIO.create_video(roi, output_path + roi_path.replace(".hdf5", ".mp4"))
+        #eventIO.create_video(roi, output_path + roi_path.replace(".hdf5", ".mp4"))
         eventIO.save_hdf5(roi, output_path + roi_path, bias=[0], resolution=(roi_size, roi_size))
     else:
         print(f"ROI already exists: {output_path + roi_path}")
@@ -79,6 +79,8 @@ def extract_roi(events, metadata, coords):
     # end_pos_y = metadata["ball_end_z"].values[0]
 
     # print(f"Ball start: {(start_pos_x, start_pos_y)}, Ball end: {(end_pos_x, end_pos_y)}")
+    a = np.random.randint(-10, 10)
+    b = np.random.randint(-10, 10)
 
     for f in range(metadata["total_frames"].values[0]):
         # temp: only use frames that are between 100 and 240
@@ -91,6 +93,10 @@ def extract_roi(events, metadata, coords):
         #    continue
         #frame_coord = matches.iloc[0]
         frame_coord = coords.iloc[f]
+        frame_coord = {
+            "screen_x": frame_coord["screen_x"] + 50 + a + np.random.randint(-1, 1),
+            "screen_y": frame_coord["screen_y"] + 50 + b + np.random.randint(-1, 1)
+        }
         #print(f)
         #print(frame_coord)
         #print()
@@ -103,8 +109,8 @@ def extract_roi(events, metadata, coords):
                             (xs_frame < frame_coord["screen_x"] + roi_size // 2) &
                             (ys_frame >= frame_coord["screen_y"] - roi_size // 2) & 
                             (ys_frame < frame_coord["screen_y"] + roi_size // 2))
-        xs_roi = xs_frame[idxs_roi] - int(np.ceil(frame_coord["screen_x"] - roi_size // 2))
-        ys_roi = ys_frame[idxs_roi] - int(np.ceil(frame_coord["screen_y"] - roi_size // 2))
+        xs_roi = xs_frame[idxs_roi] - int(np.ceil(frame_coord["screen_x"] - (roi_size // 2)))
+        ys_roi = ys_frame[idxs_roi] - int(np.ceil(frame_coord["screen_y"] - (roi_size // 2)))
         ts_roi = ts_frame[idxs_roi]
         ps_roi = ps_frame[idxs_roi]
 
@@ -161,8 +167,8 @@ def main_sim():
     print(suffix)
     # preprocess(df.iloc[0])
 
-    preprocess(df.iloc[2])
-    return
+    # preprocess(df.iloc[485])
+    # return
 
     for i in tqdm.tqdm(range(len(df))):
         preprocess(df.iloc[i])
@@ -214,4 +220,4 @@ def main_real():
         
 
 if __name__ == "__main__":
-    main_real()
+    main_sim()
