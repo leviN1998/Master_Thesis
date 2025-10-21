@@ -35,9 +35,26 @@ class RotationLoss(torch.nn.Module):
         if reduce:
             loss = loss.mean()
         return loss, R_pred
+    
+    def vector_loss(self, v_pred, v_gt, w_dir=1.0, w_mag=0.0):
+        eps = 1e-8
+
+        pred_u = v_pred / (v_pred.norm(dim=-1, keepdim=True) + eps)
+        target_u = v_gt / (v_gt.norm(dim=-1, keepdim=True) + eps)
+        dir_loss = (1.0 - (pred_u * target_u).sum(dim=-1)).mean()
+
+        cos_loss = (pred_u * target_u).sum(dim=-1).clamp(-1.0 + 1e-6, 1.0 - 1e-6)
+        dir_loss = (1 - cos_loss).mean()
+
+        mag_loss = torch.nn.functional.smooth_l1_loss(
+            v_pred.norm(dim=-1), v_gt.norm(dim=-1)
+        )
+
+        return w_dir * dir_loss + w_mag * mag_loss, v_pred
 
     def forward(self, M_pred, R_gt):
-        loss, R_pred = self.geodesic_loss(M_pred, R_gt)
+        #loss, R_pred = self.geodesic_loss(M_pred, R_gt)
+        loss, R_pred = self.vector_loss(M_pred, R_gt)
 
         return loss, R_pred
         
@@ -118,6 +135,17 @@ def angle_error_deg(R_pred, R_gt):
     Returns:
         Tensor of shape (...) representing the angular error in degrees.
     """
+    # temp for simple loss
+    #print("angle_error:", R_pred.shape, R_gt.shape)
+    p = R_pred / (R_pred.norm(dim=-1, keepdim=True) + 1e-8)
+    t = R_gt / (R_gt.norm(dim=-1, keepdim=True) + 1e-8)
+    cos = torch.sum(p * t, dim=1)
+    cos = torch.clamp(cos, -1.0+1e-7, 1.0-1e-7)
+    angle_rad = torch.acos(cos)
+    angle_deg = torch.rad2deg(angle_rad)
+    return angle_deg
+
+
     # print("angle_error:", R_pred.shape, R_gt.shape)
     tr = torch.einsum("bij,bji->b", R_pred.transpose(-1,-2), R_gt)
     x = torch.clamp(0.5*(tr - 1.0), -1.0, 1.0)

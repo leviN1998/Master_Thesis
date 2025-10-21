@@ -34,15 +34,16 @@ trainer:
 
 
 model:
-#  optimizer:
-#    lr: 0.001
+  optimizer:
+    lr: 3e-5
   net:
     #_target_: src.models.components.fire_net.FireNet
     #pretrained_weights: "logs/train/runs/2025-10-06_17-11-51/checkpoints/epoch_045.ckpt"
     hidden_channels: 16
     #kernel_size: 9
-    #head:
+    head:
       #input_channels: 2
+      output_channels: 3  # for regression of axis-angle vector
 
 
 data:

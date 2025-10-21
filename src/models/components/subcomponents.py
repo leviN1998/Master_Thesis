@@ -190,7 +190,8 @@ class RegressionHead(nn.Module):
         x = x.view(x.size(0), -1)  # Flatten the tensor
         x = self.fc(x)
 
-        M = x.view(-1, 3, 3)  
+        #M = x.view(-1, 3, 3)  
+        M = x
 
         return M
     

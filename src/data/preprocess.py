@@ -86,10 +86,11 @@ def extract_roi(events, metadata, coords):
         #     continue
 
         t = f * frame_time_us
-        matches = coords[coords["frame"] == f]
-        if matches.empty:
-            continue
-        frame_coord = matches.iloc[0]
+        #matches = coords[coords["frame"] == f]
+        #if matches.empty:
+        #    continue
+        #frame_coord = matches.iloc[0]
+        frame_coord = coords.iloc[f]
         #print(f)
         #print(frame_coord)
         #print()
@@ -181,7 +182,8 @@ def main_sim():
     """
         
 def main_real():
-    base_path = "/home/lkolmar/Documents/metavision/recordings/spindoe_topspin/"
+    #base_path = "/home/lkolmar/Documents/metavision/recordings/spindoe_topspin/"
+    base_path = "/data/lkolmar/datasets/spindoe_topspin/"
     raw_data_path = base_path + "data/"
     roi_coords_path = base_path + "roi_coords/"
     output_path = base_path + "preprocessed/"
@@ -199,11 +201,17 @@ def main_real():
     for file in tqdm.tqdm(files):
         filename = file.replace("program1/", "").replace("program2/", "").replace("program3/", "").replace("program4/", "").replace("program5/", "").replace("program6/", "")
 
+        c_path = filename.split("/")[-1]
+        #print(c_path)
+
+        os.makedirs(os.path.join(output_path, filename.split("/")[0]), exist_ok=True)
+
         preprocess_real(
             hdf5_path = os.path.join(raw_data_path, file),
-            coords_path = os.path.join(roi_coords_path, filename.replace(".hdf5", ".pkl")),
+            coords_path = os.path.join(roi_coords_path, c_path.replace(".hdf5", ".pkl")),
             output_path = os.path.join(output_path, filename.replace("raw_data/", ""))
         )
+        
 
 if __name__ == "__main__":
     main_real()

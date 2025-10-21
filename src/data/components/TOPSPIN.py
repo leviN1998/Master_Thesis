@@ -114,7 +114,7 @@ class Hdf5DatasetRegression(Dataset):
         omega = target["rotation_omega"].values[0]
         spin = torch.tensor([x, y, z], dtype=torch.float32)
         spin = (spin / torch.linalg.norm(spin)) * omega
-        spin = regression_utils.axis_angle_to_rotmat_torch(spin)
+        #spin = regression_utils.axis_angle_to_rotmat_torch(spin)
 
         return array, spin
 
