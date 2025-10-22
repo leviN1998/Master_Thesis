@@ -13,7 +13,7 @@ import rotations
 import tqdm
 
 
-dataset_path = "/data/lkolmar/datasets/realistic_topspin/"
+dataset_path = "/data/lkolmar/datasets/spindoe_topspin/"
 labels = {
     "topspin_slow": 0,
     "topspin_mid": 1,

@@ -1,0 +1,53 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+
+defaults:
+  - override /data: synthetic_spindoe.yaml
+  - override /model: firenet_adaptive.yaml
+  - override /callbacks: default.yaml
+  - override /trainer: gpu.yaml
+  - override /logger: wandb.yaml
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+tags: ["topspin", "firenet_net"]
+
+# ckpt_path: "logs/train/runs/2025-07-31_14-25-04/checkpoints/epoch_009.ckpt"
+
+# seed: 1234567
+
+trainer:
+  min_epochs: 10
+  max_epochs: 200
+  gradient_clip_val: 0.5
+
+
+model:
+  optimizer:
+    lr: 1e-4
+  net:
+    input_channels: 10
+    head: 
+      _target_: src.models.components.subcomponents.AdaptiveAvgHead
+      input_channels: 16
+      hidden_channels: 32
+      num_classes: 6
+  compile: false
+
+
+data:
+  batch_size: 8
+  num_workers: 2
+  time_window: 7000
+  num_bins: 10
+  #train_val_test_split: [10, 1, 1]
+
+logger:
+  wandb:
+    tags: ${tags}
+    group: "topspin"
+  aim:
+    experiment: "topspin"
