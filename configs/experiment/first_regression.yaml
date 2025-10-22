@@ -38,7 +38,7 @@ model:
     lr: 3e-5
   net:
     #_target_: src.models.components.fire_net.FireNet
-    #pretrained_weights: "logs/train/runs/2025-10-06_17-11-51/checkpoints/epoch_045.ckpt"
+    pretrained_weights: "logs/train/runs/2025-10-21_17-42-06/checkpoints/epoch_093.ckpt"
     hidden_channels: 16
     #kernel_size: 9
     head:
@@ -47,9 +47,9 @@ model:
 
 
 data:
-  batch_size: 8
+  batch_size: 6
   num_workers: 2
-  time_window: 7000
+  time_window: 5000
   num_bins: 10
   #train_val_test_split: [8, 1, 1]
 

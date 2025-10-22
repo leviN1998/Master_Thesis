@@ -15,7 +15,7 @@ defaults:
 
 tags: ["topspin", "firenet_net"]
 
-# ckpt_path: "logs/train/runs/2025-07-31_14-25-04/checkpoints/epoch_009.ckpt"
+ckpt_path: "logs/train/runs/2025-10-21_17-42-06/checkpoints/last.ckpt"
 
 # seed: 1234567
 

@@ -1,7 +1,7 @@
 ---
 author: Levin Kolmar
 title: "Learning-based spin estimation of table tennis ball with an event camera"
-subtitle: "Progress report week 19"
+subtitle: "Progress report week 20"
 institute: "Cognitive Systems, University of Tübingen"
 documentclass: scrartcl
 papersize: a4
@@ -9,25 +9,26 @@ papersize: a4
 
 # Summary
 
-* Writing
-* Training 2 class (topspin / backspin) training: 98% accuracy. Testing on real data: 93% accuracy
-* Training 6 class (+ fast, mid, slow) training: 97% accuracy. Testing on real data: 85% accuracy. (only 90% on train set. Prbably wrong ball-gun labels)
-* Finished regression code, but bug on network head that prevents good learning.
+* Found a big bug in preprocessing, the simulated datasets only had a 1/4 of the ball visible.
+* Tested Accuracy on real data (See confusion matrix). Most of the missclassifications either have the correct speed or spin direction. 
+The highest probability of failing comes with high rps values or high siedespin settings.
+* Trained regression model
+* Trained model on Dotted balls
+* Recorded dataset with less sidespin values
+* Almost finished writing of chapter Methodology
+
+![Confusion matrix for real data](../conf_matrix2.png){ width=75% }
+
+
+
 
 # Open questions
 
-* What can i do to improve performance on real data?
-* Do you have a good master-thesis to take a look how the writing style etc. should be?
-* Would it be good to record a smaller real-data set, where the ball-gun cant mess up labels? E.g. spin setting without sidespin.
-* What ball-gun settings did you use in the spin-estimation paper? No sidespins right?
-* Should i try tocompare against dotted balls? (I have a simulated dataset for that aswell)
 
 
 # Next steps
 
-* Bugfix regression
-* Train ergression
-* record smaller dataset
-* Find setups for better results
-* Maybe train on dotted balls
-* Continue writing
+* Check regression performance
+* Do last experiments
+* Finish methodolgy chapter
+* Do more writing
