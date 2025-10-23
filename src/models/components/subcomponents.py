@@ -195,6 +195,43 @@ class RegressionHead(nn.Module):
 
         return M
     
+class SmallHead(nn.Module):
+    """ Small head for regression tasks.
+    """
+
+    def __init__(self, input_channels: int, hidden_channels: int, output_channels: int, dropout: float = 0.25):
+        super().__init__()
+        self.input_channels = input_channels
+        self.hidden_channels = hidden_channels
+        self.output_channels = output_channels
+        
+        self.pool = nn.AdaptiveAvgPool2d(1)
+        self.flatten = nn.Flatten()
+        self.norm = nn.LayerNorm(input_channels)
+        self.fc1 = nn.Linear(input_channels, hidden_channels)
+        self.act = nn.GELU()
+        self.drop = nn.Dropout(dropout)
+        self.fc_out = nn.Linear(hidden_channels, output_channels)
+
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """ Forward pass through the regression head.
+        
+        :param x: Input tensor of shape (batch_size, input_channels, height, width).
+        :return: Output tensor of shape (batch_size, output_channels).
+        """
+        x = self.pool(x)
+        x = self.flatten(x)
+        x = self.norm(x)
+        x = self.fc1(x)
+        x = self.act(x)
+        x = self.drop(x)
+        x = self.fc_out(x)
+
+        M = x
+
+        return M
+    
 
 class EasyNet(nn.Module):
     def __init__(self, **kwargs):

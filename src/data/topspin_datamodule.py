@@ -7,6 +7,7 @@ from torch.utils.data import ConcatDataset, DataLoader, Dataset, random_split
 from torchvision.transforms import transforms
 import tonic
 import numpy as np
+import time
 
 from src.utils import event_representations
 
@@ -197,12 +198,15 @@ def pad_collate_fn(batch: list) -> Tuple[torch.Tensor, torch.Tensor]:
     :param batch: List of tuples containing event data and labels.
     :return: Padded tensor of event data and tensor of labels.
     """
+    time_start = time.time()
     events, labels = zip(*batch)
     # Stack events and labels
     events = [torch.tensor(ev, dtype=torch.float32) for ev in events]
     lengths = [ev.shape[0] for ev in events]  # Get lengths of each sequence
     padded_sequences = torch.nn.utils.rnn.pad_sequence(sequences=events, batch_first=True, padding_value=0)
     labels_tensor = torch.tensor(np.array(labels))
+    time_end = time.time()
+    #print(f"Time taken for collate_fn: {time_end - time_start:.4f} seconds")
     
     return padded_sequences, torch.tensor(lengths), labels_tensor
 

@@ -43,6 +43,9 @@ spin_values =     [-5, -4, -3, -2, -1, 1, 2, 4, 5, 7]
 sidespin_values = [ 0,  0,  0,  0,  0, 0, 0, 0, 0, 0] 
 #
 
+#spin_values =     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+#sidespin_values = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
 
 def convert_recording():
     buf = load_buffer()

@@ -4,8 +4,8 @@
 # python train.py experiment=example
 
 defaults:
-  - override /data: topspin.yaml
-  - override /model: firenet_adaptive.yaml
+  - override /data: max_regression.yaml
+  - override /model: firenet_regression.yaml
   - override /callbacks: default.yaml
   - override /trainer: gpu.yaml
   - override /logger: wandb.yaml
@@ -19,6 +19,16 @@ tags: ["topspin", "firenet_net"]
 
 # seed: 1234567
 
+callbacks:
+  model_checkpoint:
+    monitor: "val/mean_deg"
+    mode: "min"
+
+  early_stopping:
+    monitor: "val/mean_deg"
+    patience: 100
+    mode: "min"
+
 trainer:
   min_epochs: 10
   max_epochs: 50
@@ -27,14 +37,16 @@ trainer:
 
 model:
   optimizer:
-    lr: 1e-4
+    _target_: torch.optim.AdamW
+    _partial_: true
+    lr: 1e-3
+    weight_decay: 1e-4
   net:
     input_channels: 20
-    head: 
-      _target_: src.models.components.subcomponents.AdaptiveAvgHead
-      input_channels: 16
-      hidden_channels: 32
-      num_classes: 6
+    head:
+      _target_: src.models.components.subcomponents.SmallHead
+      output_channels: 3  # for regression of axis-angle vector
+
   compile: false
 
 

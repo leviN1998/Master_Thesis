@@ -117,40 +117,72 @@ def process_sequence(buffer, n_centers, n_coordinates, verbose=True):
 
 
 if __name__ == "__main__":
-    n_centers = 8
-    n_coordinates = 140
+    n_centers = 20
+    n_coordinates = 600
 
-    #data_path = "/home/lkolmar/Documents/metavision/recordings/new_real_dataset/raw_data/"
-    #output_path = "/home/lkolmar/Documents/metavision/recordings/new_real_dataset/roi_coords/"
-    data_path = "/data/lkolmar/datasets/spindoe_topspin/data/"
-    output_path = "/data/lkolmar/datasets/spindoe_topspin/roi_coords/"
+    data_path = "/home/lkolmar/Documents/metavision/recordings/finished/"
+    output_path = "/home/lkolmar/Documents/metavision/recordings/roi_coords_simple/"
 
-    #folders = [f for f in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, f))]
-    #paths = []
-    #for folder in folders:
-    #    file_names = [f for f in os.listdir(os.path.join(data_path, folder)) if f.endswith('.hdf5')]
-    #    for name in file_names:
-    #        paths.append(os.path.join(data_path,folder, name))
+
+    #data_path = "/data/lkolmar/datasets/spindoe_topspin/data/"
+    #output_path = "/data/lkolmar/datasets/spindoe_topspin/roi_coords/"
+    
+    
     folders = [f for f in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, f))]
     paths = []
     for folder in folders:
         file_names = [f for f in os.listdir(os.path.join(data_path, folder)) if f.endswith('.hdf5')]
         for name in file_names:
-            paths.append(os.path.join(data_path, folder, name))
+            paths.append((folder, name))
+
+    print(f"Found {len(paths)} files to process.")
+    print(paths[:5])
+    import h5py
+    sys.path.append("src/utils/IEBCS")
+    sys.path.append("src/utils")
+    from event_buffer import EventBuffer
+
     
-    print(f"Found {len(paths)} files.")
-    print(paths[0])
-    
-    
-    for path in tqdm.tqdm(paths):    
-        name = os.path.basename(path)
-        # print(f"Processing {name}...")
-        buf = eventIO.load_hdf5(path)
+    for folder, name in tqdm.tqdm(paths):   
+        processed = [f for f in os.listdir(output_path + folder + "/") if f.endswith('.pkl')]
+        # print(processed[:5]) 
+
+        if name.replace(".hdf5", ".pkl") in processed:
+            print(f"File {name} already processed, skipping.")
+            continue
+
+
+        path = data_path + folder + "/" + name
+        if "usable" in name:
+            continue
+
+        #print(path)
+        with h5py.File(path, "r") as f:
+            events = f["CD"]["events"]
+            x = events["x"][:]
+            y = events["y"][:]
+            t = events["t"][:]
+            p = events["p"][:]
+            t = t - np.min(t)  
+            buf = EventBuffer(0)
+            buf.x = x
+            buf.y = y
+            buf.ts = t
+            buf.p = p
+            buf.i = buf.ts.shape[0]
+
+        # save correct hdf5
+        eventIO.save_hdf5(buf, data_path + folder + "/" + name.replace(".hdf5", "_usable.hdf5"), bias=[0,0])
+
+        #buf = eventIO.load_hdf5(path)
+
 
         coords = process_sequence(buf, n_centers=n_centers, n_coordinates=n_coordinates, verbose=False)
 
-        with open(output_path + name.replace(".hdf5", ".pkl"), "wb") as f:
+        with open(output_path + folder + "/" + name.replace(".hdf5", ".pkl"), "wb") as f:
             pickle.dump(coords, f)
+
+        #break
 
         # test = pickle.load(open(output_path + name.replace(".hdf5", ".pkl"), "rb"))
         # print(test)

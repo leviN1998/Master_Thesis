@@ -1,0 +1,10 @@
+_target_: src.data.regression_datamodule.RegressionDataModule
+data_dir: /data/lkolmar/datasets/topspin_fit_to_max/
+batch_size: 128  # Needs to be divisible by the number of devices
+train_val_test_split: [1294, 277, 277]   # n = 1848 (70%, 15%, 15%)
+num_workers: 7
+pin_memory: False
+time_window: 5000  # in us, used for creating sequences from events
+num_bins: 10  # number of bins for voxel grid representation
+sensor_size: [100, 100]  # size of the sensor in pixels, used for voxel grid representation
+flip: True  # whether to flip the event data
