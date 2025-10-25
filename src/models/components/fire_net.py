@@ -76,7 +76,7 @@ class FireNet(nn.Module):
         x = self.state1
 
         x += residual
-        # x = torch.relu(x)
+        x = torch.relu(x)
         x = self.res1(x)
 
         residual = x
@@ -85,7 +85,7 @@ class FireNet(nn.Module):
         x = self.state2
         
         x += residual
-        # x = torch.relu(x)
+        x = torch.relu(x)
 
         return x
 
@@ -118,37 +118,20 @@ class FireNet(nn.Module):
         if lengths is None:
             lengths = torch.full((batch_size,), sequence_length, dtype=torch.int64, device=x.device)
 
-        last_feat = torch.zeros(batch_size, self.hidden_channels, h, w, dtype=x.dtype, device=x.device)
+        #last_feat = torch.zeros(batch_size, self.hidden_channels, h, w, dtype=x.dtype, device=x.device)
 
         for t in range(sequence_length):
-            #continue
             mask = (lengths > t).float() # [batch]
             mask = mask.view(-1, 1, 1, 1)  # [batch, 1, 1, 1]
             x_t = x[t]
 
             x_t = self.forward_step(x_t, mask)
 
-            for b in range(batch_size):
-                if t == lengths[b] - 1:
-                    last_feat[b] = x_t[b]
-
-            """
-            is_last_step = (lengths == (t + 1)).float().view(batch_size, 1, 1)
+            is_last_step = (lengths == (t + 1)).float().unsqueeze(1)
             x_t = self.res2(x_t)
             x_t = self.head(x_t)
 
-            # print(torch.ones(x_t.shape[1:]))
-            # print(f"x_t shape: {x_t.shape}, is_last_step shape: {is_last_step.shape}, output shape: {output.shape}")
-            if len(is_last_step.shape[1:]) != len(output.shape[1:]):
-                #print(is_last_step.shape, output.shape)
-                is_last_step = is_last_step[:, None]
-
             output += x_t * is_last_step
-            """
+            
 
-        x = self.res2(last_feat)
-
-        #x = self.conv_flatten(x[5])
-        output = self.head(x)
-
-        return output
+        return x_t

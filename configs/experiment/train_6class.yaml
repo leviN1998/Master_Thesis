@@ -4,9 +4,8 @@
 # python train.py experiment=example
 
 defaults:
-  #- override /data: max_regression.yaml
-  - override /data: small_real_regression.yaml
-  - override /model: firenet_regression.yaml
+  - override /data: realistic_topspin.yaml
+  - override /model: firenet_adaptive.yaml
   - override /callbacks: default.yaml
   - override /trainer: gpu.yaml
   - override /logger: wandb.yaml
@@ -20,16 +19,6 @@ tags: ["topspin", "firenet_net"]
 
 # seed: 1234567
 
-callbacks:
-  model_checkpoint:
-    monitor: "val/mean_deg"
-    mode: "min"
-
-  early_stopping:
-    monitor: "val/mean_deg"
-    patience: 100
-    mode: "min"
-
 trainer:
   min_epochs: 10
   max_epochs: 150
@@ -38,25 +27,25 @@ trainer:
 
 model:
   optimizer:
-    _target_: torch.optim.AdamW
-    _partial_: true
-    lr: 1e-3
-    weight_decay: 1e-4
+    lr: 0.0001
   net:
-    input_channels: 20
-    head:
-      _target_: src.models.components.subcomponents.SmallHead
-      output_channels: 3  # for regression of axis-angle vector
-
+    pretrained_weights: "logs/train/runs/2025-10-21_17-42-06/checkpoints/epoch_093.ckpt"
+    input_channels: 10
+    head: 
+      _target_: src.models.components.subcomponents.AdaptiveAvgHead
+      input_channels: 16
+      hidden_channels: 32
+      num_classes: 6
+      pretrained_weights: "logs/train/runs/2025-10-21_17-42-06/checkpoints/epoch_093.ckpt"
   compile: false
 
 
 data:
-  batch_size: 16
+  batch_size: 8
   num_workers: 2
-  time_window: 10000
-  num_bins: 20
-  #train_val_test_split: [10, 1, 1]
+  time_window: 7000
+  num_bins: 10
+  #train_val_test_split: [1000, 100, 100]
 
 logger:
   wandb:
