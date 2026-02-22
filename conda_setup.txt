@@ -81,3 +81,7 @@ Resources:
     https://docs.ros.org/en/foxy/Tutorials/Beginner-Client-Libraries/Colcon-Tutorial.html
 
 3. Install other dependencies
+
+
+## Setup stuff:
+export HDF5_PLUGIN_PATH=$HDF5_PLUGIN_PATH:/usr/lib/x86_64-linux-gnu/hdf5/plugins
