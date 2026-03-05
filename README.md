@@ -7,8 +7,9 @@
 
 > **End-to-end deep learning pipeline for estimating table tennis ball spin from event-camera data.**
 
+### Event Representation vs Frame Camera
 <p align="center">
-  <img src="docs/assets/teaser.gif" width="70%">
+  <img src="data/side_by_side.gif" width="70%">
 </p>
 
 ---
