@@ -9,6 +9,7 @@
 
 <p align="center">
   <img src="data/side_by_side.gif" width="95%">
+  <img src="data/frame_vs_event_roi.gif", width="60%">
 </p>
 
 ---
@@ -43,7 +44,7 @@ To ensure that the system works under real-life conditions, it is finetuned usin
 ## 🧠 Method Pipeline
 
 <p align="center">
-  <img src="docs/assets/pipeline.png" width="85%">
+  <img src="data/pipeline.png" width="85%">
 </p>
 
 ```text
@@ -188,12 +189,12 @@ Co-Supervisor: Prof. Hendrik P. A. Lensch
 
 ## 📜 License
 
-MIT License — see `LICENSE` for details.
+MIT License: see `LICENSE` for details.
 
 ---
 
 ## ⭐ If you find this useful
 
-Consider starring the repo — it helps a lot!
+Consider starring the repo, it helps a lot!
 
 ---
