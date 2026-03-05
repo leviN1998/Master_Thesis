@@ -9,6 +9,11 @@
 
 <p align="center">
   <img src="data/side_by_side.gif" width="95%">
+</p>
+
+---
+
+<p align="center">
   <img src="data/frame_vs_event_roi.gif", width="40%">
 </p>
 
