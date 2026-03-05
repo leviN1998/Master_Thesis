@@ -9,7 +9,7 @@
 
 <p align="center">
   <img src="data/side_by_side.gif" width="95%">
-  <img src="data/frame_vs_event_roi.gif", width="60%">
+  <img src="data/frame_vs_event_roi.gif", width="40%">
 </p>
 
 ---
@@ -46,18 +46,6 @@ To ensure that the system works under real-life conditions, it is finetuned usin
 <p align="center">
   <img src="data/pipeline.png" width="85%">
 </p>
-
-```text
-Blender Simulation
-      ↓
-Event Camera Simulation       Capturing data with real event-camera
-      ↓                                ↓
-Voxel Grid Encoding     ←     Tracking & ROI
-      ↓
-ConvGRU Network
-      ↓
-Spin Classification / Regression
-```
 
 ---
 
